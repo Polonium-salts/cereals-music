@@ -8,7 +8,10 @@ import {
   PlayArrow,
   GridView,
   ViewList,
-  MoreVert
+  MoreVert,
+  YouTube,
+  CloudQueue,
+  Album
 } from '@mui/icons-material';
 import { 
   IconButton, 
@@ -28,7 +31,8 @@ import {
   ListItemAvatar,
   Avatar,
   ListItemSecondaryAction,
-  Tooltip
+  Tooltip,
+  Chip
 } from '@mui/material';
 import { searchMusic, getMusicUrl, getHotSongs } from './services/musicApi';
 import MusicPlayer from './components/MusicPlayer';
@@ -105,12 +109,35 @@ export default function HomePage() {
     }
   };
 
+  const getPlatformIcon = (platform) => {
+    switch (platform) {
+      case 'netease':
+        return <CloudQueue />;
+      case 'kugou':
+        return <YouTube />;
+      case 'spotify':
+        return <Album />;
+      default:
+        return null;
+    }
+  };
+
+  const getPlatformLabel = (platform) => {
+    switch (platform) {
+      case 'netease':
+        return '网易云';
+      case 'kugou':
+        return '酷狗';
+      case 'spotify':
+        return 'Spotify';
+      default:
+        return '';
+    }
+  };
+
   const renderSongCard = (song) => (
     <Grid item xs={12} sm={6} md={3} key={song.id}>
-      <Card 
-        className="song-card"
-        onClick={() => handlePlaySong(song)}
-      >
+      <Card className="song-card" onClick={() => handlePlaySong(song)}>
         <div className="card-media-container">
           {song.album?.picUrl ? (
             <CardMedia
@@ -128,6 +155,12 @@ export default function HomePage() {
           <div className="play-overlay">
             <PlayArrow className="play-icon" />
           </div>
+          <Chip
+            icon={getPlatformIcon(song.platform)}
+            label={getPlatformLabel(song.platform)}
+            className={`platform-chip ${song.platform}`}
+            size="small"
+          />
         </div>
         <CardContent>
           <Typography variant="subtitle1" className="song-title" noWrap>
@@ -162,7 +195,17 @@ export default function HomePage() {
         )}
       </ListItemAvatar>
       <ListItemText
-        primary={song.name}
+        primary={
+          <div className="song-list-title">
+            <span>{song.name}</span>
+            <Chip
+              icon={getPlatformIcon(song.platform)}
+              label={getPlatformLabel(song.platform)}
+              className={`platform-chip ${song.platform}`}
+              size="small"
+            />
+          </div>
+        }
         secondary={song.artists?.map(artist => artist.name).join(', ')}
         className="song-list-text"
       />

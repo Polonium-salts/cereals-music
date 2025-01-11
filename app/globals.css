@@ -562,19 +562,59 @@ body {
   right: 0.75rem;
   background: rgba(255, 255, 255, 0.9) !important;
   backdrop-filter: blur(4px);
-  border: 1px solid var(--card-border) !important;
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid var(--border) !important;
+  font-size: 0.75rem !important;
+  height: 24px !important;
+  z-index: 2;
 }
 
-.platform-chip.youtube {
-  color: #ff0000 !important;
+.dark-theme .platform-chip {
+  background: rgba(0, 0, 0, 0.75) !important;
 }
 
 .platform-chip.netease {
-  color: var(--primary) !important;
+  color: #c20c0c !important;
 }
 
-.platform-chip-icon {
+.platform-chip.kugou {
+  color: #2c6aa0 !important;
+}
+
+.platform-chip.spotify {
+  color: #1db954 !important;
+}
+
+.platform-chip .MuiChip-icon {
   font-size: 1rem !important;
+  color: inherit !important;
+}
+
+.song-list-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.song-list-title .platform-chip {
+  position: static !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  height: 20px !important;
+  backdrop-filter: none !important;
+}
+
+/* 响应式优化 */
+@media (max-width: 600px) {
+  .platform-chip {
+    font-size: 0.7rem !important;
+    height: 20px !important;
+  }
+
+  .platform-chip .MuiChip-icon {
+    font-size: 0.875rem !important;
+  }
 }
 
 .search-results {
