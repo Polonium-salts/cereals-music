@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://youtube-api-ten-tawny.vercel.app',
+  baseURL: 'https://kapi.vip247.icu/',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',

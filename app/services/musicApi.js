@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 创建一个带有超时和重试配置的 axios 实例
 const api = axios.create({
-  baseURL: 'https://api-flax-phi-41.vercel.app',
+  baseURL: 'https://wapi.vip247.icu/',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',

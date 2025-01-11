@@ -1414,3 +1414,159 @@ body {
     align-self: flex-end;
   }
 }
+
+/* 视图切换按钮 */
+.view-mode-toggle {
+  margin-right: 0.5rem !important;
+}
+
+/* 列表视图样式 */
+.song-list {
+  background: var(--card-background);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+.song-list-item {
+  padding: 0.75rem 1rem !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+
+.song-list-item:last-child {
+  border-bottom: none;
+}
+
+.song-list-item:hover {
+  background-color: var(--hover-background);
+}
+
+.song-list-cover {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.song-list-text {
+  margin-right: 48px !important;
+}
+
+.song-list-text .MuiTypography-root {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.song-list-play {
+  opacity: 0;
+  transition: opacity 0.3s ease !important;
+}
+
+.song-list-item:hover .song-list-play {
+  opacity: 1;
+}
+
+/* 部分优化 */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+  .content-area {
+    padding: 1rem;
+  }
+
+  .top-header {
+    padding: 0.75rem;
+    height: auto;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .user-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .song-list-item {
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  .song-list-cover {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .song-list-play {
+    opacity: 1;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .section-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .view-all {
+    margin-left: auto;
+  }
+}
+
+/* 平板布局优化 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .song-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+
+  .content-area {
+    padding: 1.5rem;
+  }
+}
+
+/* 底部播放器适配 */
+@media (max-width: 768px) {
+  .music-player {
+    padding: 0.75rem;
+  }
+
+  .player-content {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .song-info {
+    justify-content: flex-start;
+  }
+
+  .player-controls-wrapper {
+    width: 100%;
+  }
+
+  .volume-control {
+    display: none;
+  }
+}

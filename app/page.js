@@ -5,7 +5,10 @@ import {
   Search, 
   DarkMode,
   AccountCircle,
-  PlayArrow
+  PlayArrow,
+  GridView,
+  ViewList,
+  MoreVert
 } from '@mui/icons-material';
 import { 
   IconButton, 
@@ -18,7 +21,14 @@ import {
   Typography,
   Grid,
   CircularProgress,
-  Skeleton
+  Skeleton,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  Avatar,
+  ListItemSecondaryAction,
+  Tooltip
 } from '@mui/material';
 import { searchMusic, getMusicUrl, getHotSongs } from './services/musicApi';
 import MusicPlayer from './components/MusicPlayer';
@@ -37,6 +47,7 @@ export default function HomePage() {
   const [hotSongs, setHotSongs] = useState([]);
   const [displaySongs, setDisplaySongs] = useState([]);
   const [isLoadingHotSongs, setIsLoadingHotSongs] = useState(true);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
   // 获取热门歌曲并随机选择12首
   useEffect(() => {
@@ -130,6 +141,51 @@ export default function HomePage() {
     </Grid>
   );
 
+  const renderListItem = (song) => (
+    <ListItem 
+      key={song.id}
+      className="song-list-item"
+      onClick={() => handlePlaySong(song)}
+    >
+      <ListItemAvatar>
+        {song.album?.picUrl ? (
+          <Avatar 
+            src={song.album.picUrl} 
+            alt={song.name}
+            variant="rounded"
+            className="song-list-cover"
+          />
+        ) : (
+          <Avatar variant="rounded" className="song-list-cover">
+            <MusicIcon />
+          </Avatar>
+        )}
+      </ListItemAvatar>
+      <ListItemText
+        primary={song.name}
+        secondary={song.artists?.map(artist => artist.name).join(', ')}
+        className="song-list-text"
+      />
+      <ListItemSecondaryAction>
+        <IconButton edge="end" className="song-list-play">
+          <PlayArrow />
+        </IconButton>
+      </ListItemSecondaryAction>
+    </ListItem>
+  );
+
+  const renderSongGrid = (songs) => (
+    <Grid container spacing={2} className="song-grid">
+      {songs.map(renderSongCard)}
+    </Grid>
+  );
+
+  const renderSongList = (songs) => (
+    <List className="song-list">
+      {songs.map(renderListItem)}
+    </List>
+  );
+
   return (
     <div className={`app-container ${isDarkMode ? 'dark-theme' : ''}`}>
       <Sidebar />
@@ -162,6 +218,14 @@ export default function HomePage() {
             </Button>
           </div>
           <div className="user-actions">
+            <Tooltip title={viewMode === 'grid' ? '切换到列表视图' : '切换到网格视图'}>
+              <IconButton 
+                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                className="view-mode-toggle"
+              >
+                {viewMode === 'grid' ? <ViewList /> : <GridView />}
+              </IconButton>
+            </Tooltip>
             <IconButton 
               className="theme-toggle" 
               onClick={toggleTheme}
@@ -183,9 +247,11 @@ export default function HomePage() {
           )}
 
           {searchResults.length > 0 ? (
-            <Grid container spacing={2} className="search-results">
-              {searchResults.map(renderSongCard)}
-            </Grid>
+            viewMode === 'grid' ? (
+              renderSongGrid(searchResults)
+            ) : (
+              renderSongList(searchResults)
+            )
           ) : !isLoading && searchQuery && (
             <div className="no-results">
               <Typography variant="h6" color="text.secondary">
@@ -198,32 +264,61 @@ export default function HomePage() {
             <section className="featured">
               <div className="section-header">
                 <h2>推荐歌单</h2>
-                <Button
-                  href="/playlists"
-                  variant="text"
-                  className="view-all"
-                >
-                  查看全部
-                </Button>
+                <div className="section-actions">
+                  <Tooltip title={viewMode === 'grid' ? '切换到列表视图' : '切换到网格视图'}>
+                    <IconButton 
+                      onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                      className="view-mode-toggle"
+                    >
+                      {viewMode === 'grid' ? <ViewList /> : <GridView />}
+                    </IconButton>
+                  </Tooltip>
+                  <Button
+                    href="/playlists"
+                    variant="text"
+                    className="view-all"
+                  >
+                    查看全部
+                  </Button>
+                </div>
               </div>
-              <Grid container spacing={2} className="song-grid">
-                {isLoadingHotSongs ? (
-                  // 加载骨架屏 - 4x3布局
-                  Array.from(new Array(12)).map((_, index) => (
-                    <Grid item xs={12} sm={6} md={3} key={index}>
-                      <Card className="song-card">
-                        <Skeleton variant="rectangular" height={160} />
-                        <CardContent>
-                          <Skeleton variant="text" width="80%" />
-                          <Skeleton variant="text" width="60%" />
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  ))
+              {isLoadingHotSongs ? (
+                viewMode === 'grid' ? (
+                  <Grid container spacing={2} className="song-grid">
+                    {Array.from(new Array(12)).map((_, index) => (
+                      <Grid item xs={12} sm={6} md={3} key={index}>
+                        <Card className="song-card">
+                          <Skeleton variant="rectangular" height={160} />
+                          <CardContent>
+                            <Skeleton variant="text" width="80%" />
+                            <Skeleton variant="text" width="60%" />
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
                 ) : (
-                  displaySongs.map(renderSongCard)
-                )}
-              </Grid>
+                  <List className="song-list">
+                    {Array.from(new Array(12)).map((_, index) => (
+                      <ListItem key={index}>
+                        <ListItemAvatar>
+                          <Skeleton variant="rectangular" width={40} height={40} />
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={<Skeleton width="60%" />}
+                          secondary={<Skeleton width="40%" />}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                )
+              ) : (
+                viewMode === 'grid' ? (
+                  renderSongGrid(displaySongs)
+                ) : (
+                  renderSongList(displaySongs)
+                )
+              )}
             </section>
           )}
         </div>
