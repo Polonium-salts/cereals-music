@@ -156,4 +156,120 @@ export const getHotSongs = async (limit = 30) => {
     console.error('获取热门歌曲失败:', error);
     throw new Error('获取热门歌曲失败');
   }
-}; 
+};
+
+// 获取歌单分类
+export async function getPlaylistCategories() {
+  try {
+    const response = await api.get('/playlist/catlist');
+    if (response.data.categories && response.data.sub) {
+      const categories = Object.entries(response.data.categories).map(([id, name]) => ({
+        id,
+        name
+      }));
+      
+      const subCategories = response.data.sub.map(item => ({
+        id: item.name,
+        name: item.name,
+        category: item.category,
+        hot: item.hot
+      }));
+
+      return {
+        categories,
+        subCategories
+      };
+    }
+    return { categories: [], subCategories: [] };
+  } catch (error) {
+    console.error('获取歌单分类失败:', error);
+    throw new Error('获取歌单分类失败');
+  }
+}
+
+// 获取歌单列表（支持分类）
+export async function getPlaylists(params = {}) {
+  const { limit = 30, offset = 0, cat = '全部', order = 'hot' } = params;
+  
+  try {
+    const response = await api.get('/top/playlist', {
+      params: {
+        limit,
+        offset,
+        cat,
+        order
+      }
+    });
+
+    if (response.data.playlists) {
+      return {
+        playlists: response.data.playlists.map(playlist => ({
+          id: playlist.id,
+          name: playlist.name,
+          description: playlist.description,
+          coverUrl: playlist.coverImgUrl,
+          songCount: playlist.trackCount,
+          playCount: playlist.playCount,
+          creator: {
+            id: playlist.creator.userId,
+            name: playlist.creator.nickname,
+            avatarUrl: playlist.creator.avatarUrl
+          },
+          tags: playlist.tags,
+          category: playlist.category
+        })),
+        total: response.data.total,
+        more: response.data.more
+      };
+    }
+    return { playlists: [], total: 0, more: false };
+  } catch (error) {
+    console.error('获取歌单列表失败:', error);
+    throw new Error('获取歌单列表失败');
+  }
+}
+
+// 获取歌单详情
+export async function getPlaylistDetail(id) {
+  try {
+    const response = await api.get(`/playlist/detail`, {
+      params: { id }
+    });
+
+    if (response.data.playlist) {
+      const playlist = response.data.playlist;
+      return {
+        id: playlist.id,
+        name: playlist.name,
+        description: playlist.description,
+        coverUrl: playlist.coverImgUrl,
+        songCount: playlist.trackCount,
+        playCount: playlist.playCount,
+        creator: {
+          id: playlist.creator.userId,
+          name: playlist.creator.nickname,
+          avatarUrl: playlist.creator.avatarUrl
+        },
+        tags: playlist.tags,
+        tracks: playlist.tracks?.map(track => ({
+          id: track.id,
+          name: track.name,
+          artists: track.ar?.map(artist => ({
+            id: artist.id,
+            name: artist.name
+          })),
+          album: {
+            id: track.al?.id,
+            name: track.al?.name,
+            picUrl: track.al?.picUrl
+          },
+          duration: track.dt
+        }))
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('获取歌单详情失败:', error);
+    throw new Error('获取歌单详情失败');
+  }
+} 

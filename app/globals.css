@@ -1570,3 +1570,154 @@ body {
     display: none;
   }
 }
+
+/* 歌单广场样式 */
+.category-chips {
+  overflow-x: auto;
+  padding: 0.5rem 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  position: sticky;
+  top: 0;
+  background: var(--background);
+  z-index: 10;
+  border-bottom: 1px solid var(--border);
+  margin: 0 -2rem;
+  padding: 1rem 2rem;
+}
+
+.category-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.category-chips .MuiChip-root {
+  transition: all 0.3s ease;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.category-chips .MuiChip-root:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+.playlist-card {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--card-background);
+  box-shadow: 0 2px 8px var(--shadow-color);
+  height: 100%;
+  animation: fadeIn 0.5s ease;
+}
+
+.playlist-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px var(--shadow-color);
+}
+
+.playlist-cover {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.playlist-card:hover .playlist-cover {
+  transform: scale(1.05);
+}
+
+.playlist-title {
+  font-weight: 600 !important;
+  margin-bottom: 0.25rem !important;
+  color: var(--text-primary) !important;
+}
+
+.playlist-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.playlist-card:hover .playlist-actions {
+  opacity: 1;
+}
+
+/* 响应式布局优化 */
+@media (max-width: 768px) {
+  .category-chips {
+    margin: 0 -1rem;
+    padding: 1rem;
+  }
+  
+  .playlist-actions {
+    opacity: 1;
+  }
+
+  .MuiPagination-ul {
+    gap: 0.25rem;
+  }
+}
+
+/* 分页样式优化 */
+.MuiPagination-root {
+  margin: 2rem 0;
+}
+
+.MuiPagination-ul {
+  gap: 0.5rem;
+}
+
+.MuiPaginationItem-root {
+  background-color: var(--card-background) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.3s ease !important;
+}
+
+.MuiPaginationItem-root:hover {
+  background-color: var(--hover-background) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+.MuiPaginationItem-root.Mui-selected {
+  background-color: var(--primary-color) !important;
+  color: var(--button-text) !important;
+  border-color: var(--primary-color) !important;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 响应式布局优化 */
+@media (max-width: 768px) {
+  .category-chips {
+    margin: 0 -1rem;
+    padding: 1rem;
+  }
+  
+  .playlist-actions {
+    opacity: 1;
+  }
+
+  .MuiPagination-ul {
+    gap: 0.25rem;
+  }
+}
