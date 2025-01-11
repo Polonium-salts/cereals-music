@@ -24,14 +24,49 @@ api.interceptors.response.use(
   }
 );
 
+// 创建一个通用的重试函数
+const retryRequest = async (apiCall, maxRetries = 3, delay = 2000) => {
+  let lastError;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await apiCall();
+    } catch (error) {
+      lastError = error;
+      if (error.response?.status === 502 || !error.response) {
+        console.log(`重试请求 (${i + 1}/${maxRetries})...`);
+        await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError;
+};
+
 // 创建酷狗音乐的 axios 实例
 const kugouApi = axios.create({
   baseURL: 'https://kapi.vip247.icu',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
-  }
+  },
+  // 添加重试配置
+  retry: 3,
+  retryDelay: 2000
 });
+
+// 添加请求拦截器
+kugouApi.interceptors.request.use(
+  config => {
+    // 添加随机参数避免缓存
+    config.params = {
+      ...config.params,
+      _t: Date.now()
+    };
+    return config;
+  },
+  error => Promise.reject(error)
+);
 
 // 添加响应拦截器
 kugouApi.interceptors.response.use(
@@ -39,11 +74,21 @@ kugouApi.interceptors.response.use(
   async error => {
     const { config, response } = error;
     
-    // 如果是网络错误或超时，尝试重试
-    if ((!response || response.status === 502) && config && !config._retry) {
+    // 如果是网络错误或502错误，并且还没有重试过
+    if ((response?.status === 502 || !response) && config && !config._retry) {
       config._retry = true;
-      // 增加重试延迟
-      return new Promise(resolve => setTimeout(() => resolve(kugouApi(config)), 2000));
+      
+      // 使用递增的重试延迟
+      const retryDelay = config.retryDelay || 2000;
+      await new Promise(resolve => setTimeout(resolve, retryDelay * config._retryCount || 1));
+      
+      // 增加重试计数
+      config._retryCount = (config._retryCount || 0) + 1;
+      
+      // 如果重试次数未超过最大值，则重试
+      if (config._retryCount <= (config.retry || 3)) {
+        return kugouApi(config);
+      }
     }
     return Promise.reject(error);
   }
@@ -52,12 +97,14 @@ kugouApi.interceptors.response.use(
 // 搜索酷狗音乐
 async function searchKugou(keywords) {
   try {
-    const response = await kugouApi.get('/search', {
-      params: {
-        keywords,
-        limit: 100
-      }
-    });
+    const response = await retryRequest(() => 
+      kugouApi.get('/search', {
+        params: {
+          keywords,
+          limit: 100
+        }
+      })
+    );
 
     if (!response.data?.data?.lists) {
       return [];
@@ -75,7 +122,7 @@ async function searchKugou(keywords) {
         name: song.AlbumName || '未知专辑',
         picUrl: song.Image || null
       },
-      duration: (song.Duration || 0) * 1000, // 转换为毫秒
+      duration: (song.Duration || 0) * 1000,
       platform: 'kugou',
       extra: {
         hash: song.FileHash,
@@ -84,19 +131,21 @@ async function searchKugou(keywords) {
     }));
   } catch (error) {
     console.error('酷狗音乐搜索失败:', error);
-    return []; // 返回空数组而不是抛出错误，这样可以继续处理其他平台的结果
+    return [];
   }
 }
 
 // 获取酷狗音乐URL
 export const getKugouMusicUrl = async (hash, albumAudioId) => {
   try {
-    const response = await kugouApi.get('/song/url', {
-      params: { 
-        hash,
-        albumAudioId
-      }
-    });
+    const response = await retryRequest(() => 
+      kugouApi.get('/song/url', {
+        params: { 
+          hash,
+          albumAudioId
+        }
+      })
+    );
 
     if (!response.data?.data?.url) {
       throw new Error('无法获取酷狗音乐URL');
