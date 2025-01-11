@@ -8,7 +8,9 @@ import {
   PlayArrow,
   GridView,
   ViewList,
-  MoreVert
+  MoreVert,
+  YouTube,
+  CloudQueue
 } from '@mui/icons-material';
 import { 
   IconButton, 
@@ -94,7 +96,7 @@ export default function HomePage() {
 
   const handlePlaySong = async (song) => {
     try {
-      const url = await getMusicUrl(song);
+      const url = await getMusicUrl(song.id);
       if (url) {
         setCurrentSong({ ...song, url });
       } else {
@@ -130,9 +132,10 @@ export default function HomePage() {
             <PlayArrow className="play-icon" />
           </div>
           <Chip
-            size="small"
+            icon={song.platform === 'netease' ? <CloudQueue /> : <YouTube />}
             label={song.platform === 'netease' ? '网易云' : '酷狗'}
             className={`platform-chip ${song.platform}`}
+            size="small"
           />
         </div>
         <CardContent>
@@ -149,7 +152,7 @@ export default function HomePage() {
 
   const renderListItem = (song) => (
     <ListItem 
-      key={song.id}
+      key={`${song.platform}-${song.id}`}
       className="song-list-item"
       onClick={() => handlePlaySong(song)}
     >
@@ -168,7 +171,17 @@ export default function HomePage() {
         )}
       </ListItemAvatar>
       <ListItemText
-        primary={song.name}
+        primary={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {song.name}
+            <Chip
+              icon={song.platform === 'netease' ? <CloudQueue /> : <YouTube />}
+              label={song.platform === 'netease' ? '网易云' : '酷狗'}
+              className={`platform-chip ${song.platform}`}
+              size="small"
+            />
+          </div>
+        }
         secondary={song.artists?.map(artist => artist.name).join(', ')}
         className="song-list-text"
       />

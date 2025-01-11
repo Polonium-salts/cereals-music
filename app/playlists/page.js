@@ -12,10 +12,11 @@ import {
   Stack,
   IconButton,
   Tooltip,
-  Pagination,
-  CircularProgress
+  Button,
+  Menu,
+  MenuItem
 } from '@mui/material';
-import { PlayArrow, Favorite, MoreVert } from '@mui/icons-material';
+import { PlayArrow, Favorite, MoreVert, KeyboardArrowDown, YouTube, CloudQueue } from '@mui/icons-material';
 import { useTheme } from '../contexts/ThemeContext';
 import MusicIcon from '../components/MusicIcon';
 import { getPlaylists, getPlaylistCategories } from '../services/musicApi';
@@ -29,42 +30,34 @@ export default function PlaylistsPage() {
   const [selectedCategory, setSelectedCategory] = useState('全部');
   const [error, setError] = useState('');
   const [categories, setCategories] = useState([]);
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const limit = 32; // 每页显示数量
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [subCategories, setSubCategories] = useState([]);
 
-  // 获取歌单分类
+  // 获取分类数据
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const data = await getPlaylistCategories();
-        const allCategory = { id: '全部', name: '全部' };
-        const hotCategories = data.subCategories
-          .filter(cat => cat.hot)
-          .map(cat => ({ id: cat.name, name: cat.name }));
-        setCategories([allCategory, ...hotCategories]);
+        setCategories(data);
+        // 设置第一个分类的子分类
+        if (data.length > 0) {
+          setSubCategories(['全部', ...data[0].subs.map(sub => sub.name)]);
+        }
       } catch (err) {
-        console.error('获取歌单分类失败:', err);
+        console.error('获取分类失败:', err);
       }
     };
-
     fetchCategories();
   }, []);
 
-  // 获取歌单列表
+  // 获取歌单数据
   useEffect(() => {
     const fetchPlaylists = async () => {
       setIsLoading(true);
       setError('');
       try {
-        const offset = (page - 1) * limit;
-        const data = await getPlaylists({
-          limit,
-          offset,
-          cat: selectedCategory
-        });
-        setPlaylists(data.playlists);
-        setTotal(Math.ceil(data.total / limit));
+        const data = await getPlaylists(50, selectedCategory);
+        setPlaylists(data);
       } catch (err) {
         console.error('获取歌单失败:', err);
         setError('获取歌单失败，请稍后重试');
@@ -74,22 +67,23 @@ export default function PlaylistsPage() {
     };
 
     fetchPlaylists();
-  }, [selectedCategory, page]);
+  }, [selectedCategory]);
 
-  // 处理分类切换
-  const handleCategoryChange = (category) => {
-    setSelectedCategory(category);
-    setPage(1); // 重置页码
+  const handleCategoryClick = (event) => {
+    setAnchorEl(event.currentTarget);
   };
 
-  // 处理页码变化
-  const handlePageChange = (event, value) => {
-    setPage(value);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleCategoryClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    handleCategoryClose();
   };
 
   const renderPlaylistCard = (playlist) => (
-    <Grid item xs={12} sm={6} md={3} key={playlist.id}>
+    <Grid item xs={12} sm={6} md={3} key={`${playlist.platform}-${playlist.id}`}>
       <Card className="playlist-card">
         <div className="card-media-container">
           {playlist.coverUrl ? (
@@ -108,6 +102,12 @@ export default function PlaylistsPage() {
           <div className="play-overlay">
             <PlayArrow className="play-icon" />
           </div>
+          <Chip
+            icon={playlist.platform === 'netease' ? <CloudQueue /> : <YouTube />}
+            label={playlist.platform === 'netease' ? '网易云' : '酷狗'}
+            className={`platform-chip ${playlist.platform}`}
+            size="small"
+          />
         </div>
         <CardContent>
           <Typography variant="subtitle1" className="playlist-title" noWrap>
@@ -145,19 +145,36 @@ export default function PlaylistsPage() {
             <Typography variant="h5" component="h1">
               歌单广场
             </Typography>
+            <Button
+              endIcon={<KeyboardArrowDown />}
+              onClick={handleCategoryClick}
+              variant="outlined"
+              size="small"
+            >
+              {selectedCategory}
+            </Button>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleCategoryClose}
+              PaperProps={{
+                style: {
+                  maxHeight: 300,
+                  width: 200,
+                }
+              }}
+            >
+              {subCategories.map((category) => (
+                <MenuItem
+                  key={category}
+                  onClick={() => handleCategorySelect(category)}
+                  selected={category === selectedCategory}
+                >
+                  {category}
+                </MenuItem>
+              ))}
+            </Menu>
           </div>
-          
-          <Stack direction="row" spacing={1} className="category-chips" sx={{ mb: 3 }}>
-            {categories.map(category => (
-              <Chip
-                key={category.id}
-                label={category.name}
-                onClick={() => handleCategoryChange(category.id)}
-                color={selectedCategory === category.id ? 'primary' : 'default'}
-                variant={selectedCategory === category.id ? 'filled' : 'outlined'}
-              />
-            ))}
-          </Stack>
 
           {error && (
             <Typography color="error" sx={{ my: 2 }}>
@@ -180,18 +197,6 @@ export default function PlaylistsPage() {
                 ))
               : playlists.map(renderPlaylistCard)}
           </Grid>
-
-          {!isLoading && total > 1 && (
-            <Stack alignItems="center" sx={{ mt: 4, mb: 2 }}>
-              <Pagination
-                count={total}
-                page={page}
-                onChange={handlePageChange}
-                color="primary"
-                size="large"
-              />
-            </Stack>
-          )}
         </div>
       </main>
       <MobileNav />

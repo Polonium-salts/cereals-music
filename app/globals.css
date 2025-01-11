@@ -562,25 +562,15 @@ body {
   right: 0.75rem;
   background: rgba(255, 255, 255, 0.9) !important;
   backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: 1px solid var(--border) !important;
-  font-size: 0.75rem !important;
-  height: 24px !important;
-  padding: 0 8px !important;
-  font-weight: 500 !important;
-  z-index: 2;
+  border: 1px solid var(--card-border) !important;
 }
 
-.dark-theme .platform-chip {
-  background: rgba(0, 0, 0, 0.75) !important;
+.platform-chip.youtube {
+  color: #ff0000 !important;
 }
 
 .platform-chip.netease {
-  color: #c20c0c !important;
-}
-
-.platform-chip.kugou {
-  color: #2c6aa1 !important;
+  color: var(--primary) !important;
 }
 
 .platform-chip-icon {
@@ -1352,7 +1342,6 @@ body {
   justify-content: center;
   opacity: 0;
   transition: opacity 0.3s ease;
-  z-index: 1;
 }
 
 .song-card:hover .play-overlay {
@@ -1588,28 +1577,10 @@ body {
   padding: 0.5rem 0;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  position: sticky;
-  top: 0;
-  background: var(--background);
-  z-index: 10;
-  border-bottom: 1px solid var(--border);
-  margin: 0 -2rem;
-  padding: 1rem 2rem;
 }
 
 .category-chips::-webkit-scrollbar {
   display: none;
-}
-
-.category-chips .MuiChip-root {
-  transition: all 0.3s ease;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.category-chips .MuiChip-root:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px var(--shadow-color);
 }
 
 .playlist-card {
@@ -1621,7 +1592,6 @@ body {
   background: var(--card-background);
   box-shadow: 0 2px 8px var(--shadow-color);
   height: 100%;
-  animation: fadeIn 0.5s ease;
 }
 
 .playlist-card:hover {
@@ -1665,150 +1635,12 @@ body {
 /* 响应式布局优化 */
 @media (max-width: 768px) {
   .category-chips {
+    padding: 0.5rem;
     margin: 0 -1rem;
-    padding: 1rem;
+    width: calc(100% + 2rem);
   }
   
   .playlist-actions {
     opacity: 1;
-  }
-
-  .MuiPagination-ul {
-    gap: 0.25rem;
-  }
-}
-
-/* 分页样式优化 */
-.MuiPagination-root {
-  margin: 2rem 0;
-}
-
-.MuiPagination-ul {
-  gap: 0.5rem;
-}
-
-.MuiPaginationItem-root {
-  background-color: var(--card-background) !important;
-  border: 1px solid var(--border) !important;
-  color: var(--text-primary) !important;
-  transition: all 0.3s ease !important;
-}
-
-.MuiPaginationItem-root:hover {
-  background-color: var(--hover-background) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px var(--shadow-color);
-}
-
-.MuiPaginationItem-root.Mui-selected {
-  background-color: var(--primary-color) !important;
-  color: var(--button-text) !important;
-  border-color: var(--primary-color) !important;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 响应式布局优化 */
-@media (max-width: 768px) {
-  .category-chips {
-    margin: 0 -1rem;
-    padding: 1rem;
-  }
-  
-  .playlist-actions {
-    opacity: 1;
-  }
-
-  .MuiPagination-ul {
-    gap: 0.25rem;
-  }
-}
-
-/* 平台标签样式 */
-.platform-chip {
-  position: absolute !important;
-  top: 0.75rem;
-  right: 0.75rem;
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: 1px solid var(--border) !important;
-  font-size: 0.75rem !important;
-  height: 24px !important;
-  padding: 0 8px !important;
-  font-weight: 500 !important;
-  z-index: 2;
-}
-
-.dark-theme .platform-chip {
-  background: rgba(0, 0, 0, 0.75) !important;
-}
-
-.platform-chip.netease {
-  color: #c20c0c !important;
-}
-
-.platform-chip.kugou {
-  color: #2c6aa1 !important;
-}
-
-/* 卡片媒体容器样式优化 */
-.card-media-container {
-  position: relative;
-  padding-top: 100%;
-  background: var(--card-background);
-  overflow: hidden;
-}
-
-.song-cover {
-  position: absolute !important;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.song-card:hover .song-cover {
-  transform: scale(1.05);
-}
-
-/* 播放覆盖层优化 */
-.play-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 1;
-}
-
-.song-card:hover .play-overlay {
-  opacity: 1;
-}
-
-/* 响应式优化 */
-@media (max-width: 768px) {
-  .platform-chip {
-    top: 0.5rem;
-    right: 0.5rem;
-    font-size: 0.7rem !important;
-    height: 20px !important;
   }
 }
