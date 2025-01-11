@@ -1,10 +1,11 @@
 import './globals.css';
-import ThemeRegistry from './components/ThemeRegistry';
 
 export const metadata = {
-  title: 'MusicHub - 你的音乐世界',
+  title: 'Cereals Music - 你的音乐世界',
   description: '多平台音乐资源整合，一站式音乐体验',
 };
+
+import ClientLayout from './ClientLayout';
 
 export default function RootLayout({ children }) {
   return (
@@ -16,7 +17,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        <ThemeRegistry>{children}</ThemeRegistry>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

@@ -26,6 +26,7 @@ api.interceptors.response.use(
 
 export const searchMusic = async (keywords) => {
   try {
+    // 首先搜索歌曲
     const response = await api.get('/search', {
       params: {
         keywords,
@@ -38,21 +39,35 @@ export const searchMusic = async (keywords) => {
       return [];
     }
 
-    return response.data.result.songs.map(song => ({
-      id: song.id,
-      name: song.name,
-      artists: song.artists.map(artist => ({
-        id: artist.id,
-        name: artist.name
-      })),
-      album: {
-        id: song.album.id,
-        name: song.album.name,
-        picUrl: song.album.picUrl
-      },
-      duration: song.duration,
-      platform: 'netease'
-    }));
+    // 获取所有歌曲ID
+    const songIds = response.data.result.songs.map(song => song.id).join(',');
+
+    // 获取歌曲详情以获取高质量封面
+    const detailResponse = await api.get('/song/detail', {
+      params: { ids: songIds }
+    });
+
+    const songDetails = detailResponse.data?.songs || [];
+    const songDetailsMap = new Map(songDetails.map(song => [song.id, song]));
+
+    return response.data.result.songs.map(song => {
+      const detail = songDetailsMap.get(song.id);
+      return {
+        id: song.id,
+        name: song.name,
+        artists: song.artists.map(artist => ({
+          id: artist.id,
+          name: artist.name
+        })),
+        album: {
+          id: song.album.id,
+          name: song.album.name,
+          picUrl: detail?.al?.picUrl || song.album.picUrl || null
+        },
+        duration: song.duration,
+        platform: 'netease'
+      };
+    });
   } catch (error) {
     console.error('网易云音乐搜索失败:', error);
     throw new Error('网易云音乐搜索失败');
@@ -109,5 +124,36 @@ export const getMusicDetail = async (id) => {
   } catch (error) {
     console.error('获取音乐详情失败:', error);
     throw error;
+  }
+};
+
+export const getHotSongs = async (limit = 30) => {
+  try {
+    const response = await api.get('/personalized/newsong', {
+      params: { limit }
+    });
+
+    if (!response.data?.result) {
+      return [];
+    }
+
+    return response.data.result.map(item => ({
+      id: item.id,
+      name: item.name,
+      artists: item.song.artists.map(artist => ({
+        id: artist.id,
+        name: artist.name
+      })),
+      album: {
+        id: item.song.album.id,
+        name: item.song.album.name,
+        picUrl: item.song.album.picUrl
+      },
+      duration: item.song.duration,
+      platform: 'netease'
+    }));
+  } catch (error) {
+    console.error('获取热门歌曲失败:', error);
+    throw new Error('获取热门歌曲失败');
   }
 }; 

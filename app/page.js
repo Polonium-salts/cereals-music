@@ -1,15 +1,8 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { 
-  Home as HomeIcon, 
   Search, 
-  LibraryMusic, 
-  Person, 
-  Album, 
-  Favorite, 
-  PlaylistPlay, 
-  History,
   DarkMode,
   AccountCircle,
   PlayArrow
@@ -24,18 +17,46 @@ import {
   CardMedia,
   Typography,
   Grid,
-  CircularProgress
+  CircularProgress,
+  Skeleton
 } from '@mui/material';
-import { searchMusic, getMusicUrl } from './services/musicApi';
+import { searchMusic, getMusicUrl, getHotSongs } from './services/musicApi';
 import MusicPlayer from './components/MusicPlayer';
 import MusicIcon from './components/MusicIcon';
+import { useTheme } from './contexts/ThemeContext';
+import MobileNav from './components/MobileNav';
+import Sidebar from './components/Sidebar';
 
 export default function HomePage() {
+  const { isDarkMode, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentSong, setCurrentSong] = useState(null);
   const [error, setError] = useState('');
+  const [hotSongs, setHotSongs] = useState([]);
+  const [displaySongs, setDisplaySongs] = useState([]);
+  const [isLoadingHotSongs, setIsLoadingHotSongs] = useState(true);
+
+  // 获取热门歌曲并随机选择12首
+  useEffect(() => {
+    const fetchHotSongs = async () => {
+      try {
+        const songs = await getHotSongs(50);
+        setHotSongs(songs);
+        // 随机选择12首歌曲
+        const shuffledSongs = [...songs].sort(() => Math.random() - 0.5);
+        setDisplaySongs(shuffledSongs.slice(0, 12));
+      } catch (err) {
+        console.error('获取热门歌曲失败:', err);
+        setError('获取热门歌曲失败，请稍后重试');
+      } finally {
+        setIsLoadingHotSongs(false);
+      }
+    };
+
+    fetchHotSongs();
+  }, []);
 
   const handleSearch = useCallback(async () => {
     if (!searchQuery.trim()) return;
@@ -73,51 +94,45 @@ export default function HomePage() {
     }
   };
 
-  return (
-    <div className="app-container">
-      <aside className="sidebar">
-        <div className="logo">
-          <LibraryMusic className="logo-icon" />
-          MusicHub
+  const renderSongCard = (song) => (
+    <Grid item xs={12} sm={6} md={3} key={song.id}>
+      <Card 
+        className="song-card"
+        onClick={() => handlePlaySong(song)}
+      >
+        <div className="card-media-container">
+          {song.album?.picUrl ? (
+            <CardMedia
+              component="img"
+              height="180"
+              image={song.album.picUrl}
+              alt={song.name}
+              className="song-cover"
+            />
+          ) : (
+            <div className="default-cover">
+              <MusicIcon />
+            </div>
+          )}
+          <div className="play-overlay">
+            <PlayArrow className="play-icon" />
+          </div>
         </div>
-        <nav className="side-nav">
-          <div className="nav-group">
-            <h3>音乐馆</h3>
-            <a href="/discover" className="nav-item">
-              <HomeIcon className="nav-icon" />
-              发现音乐
-            </a>
-            <a href="/playlists" className="nav-item">
-              <PlaylistPlay className="nav-icon" />
-              推荐歌单
-            </a>
-            <a href="/artists" className="nav-item">
-              <Person className="nav-icon" />
-              艺术家
-            </a>
-            <a href="/albums" className="nav-item">
-              <Album className="nav-icon" />
-              新碟上架
-            </a>
-          </div>
-          <div className="nav-group">
-            <h3>我的音乐</h3>
-            <a href="/my/likes" className="nav-item">
-              <Favorite className="nav-icon" />
-              我喜欢的
-            </a>
-            <a href="/my/playlists" className="nav-item">
-              <PlaylistPlay className="nav-icon" />
-              我的歌单
-            </a>
-            <a href="/my/history" className="nav-item">
-              <History className="nav-icon" />
-              最近播放
-            </a>
-          </div>
-        </nav>
-      </aside>
+        <CardContent>
+          <Typography variant="subtitle1" className="song-title" noWrap>
+            {song.name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" noWrap>
+            {song.artists?.map(artist => artist.name).join(', ')}
+          </Typography>
+        </CardContent>
+      </Card>
+    </Grid>
+  );
 
+  return (
+    <div className={`app-container ${isDarkMode ? 'dark-theme' : ''}`}>
+      <Sidebar />
       <main className="main-content">
         <header className="top-header">
           <div className="search-box">
@@ -147,7 +162,11 @@ export default function HomePage() {
             </Button>
           </div>
           <div className="user-actions">
-            <IconButton className="theme-toggle">
+            <IconButton 
+              className="theme-toggle" 
+              onClick={toggleTheme}
+              title={isDarkMode ? '切换到浅色模式' : '切换到深色模式'}
+            >
               <DarkMode />
             </IconButton>
             <IconButton className="user-avatar">
@@ -165,41 +184,7 @@ export default function HomePage() {
 
           {searchResults.length > 0 ? (
             <Grid container spacing={2} className="search-results">
-              {searchResults.map((song) => (
-                <Grid item xs={12} sm={6} md={4} lg={3} key={song.id}>
-                  <Card 
-                    className="song-card"
-                    onClick={() => handlePlaySong(song)}
-                  >
-                    <div className="card-media-container">
-                      {song.album?.picUrl ? (
-                        <CardMedia
-                          component="img"
-                          height="160"
-                          image={song.album.picUrl}
-                          alt={song.name}
-                          className="song-cover"
-                        />
-                      ) : (
-                        <div className="default-cover">
-                          <MusicIcon />
-                        </div>
-                      )}
-                      <div className="play-overlay">
-                        <PlayArrow className="play-icon" />
-                      </div>
-                    </div>
-                    <CardContent>
-                      <Typography variant="subtitle1" className="song-title">
-                        {song.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {song.artists?.map(artist => artist.name).join(', ')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
+              {searchResults.map(renderSongCard)}
             </Grid>
           ) : !isLoading && searchQuery && (
             <div className="no-results">
@@ -217,26 +202,40 @@ export default function HomePage() {
                   href="/playlists"
                   variant="text"
                   className="view-all"
-                  endIcon={<PlaylistPlay />}
                 >
                   查看全部
                 </Button>
               </div>
-              <div className="playlist-grid">
-                {/* 这里将通过API获取数据 */}
-              </div>
+              <Grid container spacing={2} className="song-grid">
+                {isLoadingHotSongs ? (
+                  // 加载骨架屏 - 4x3布局
+                  Array.from(new Array(12)).map((_, index) => (
+                    <Grid item xs={12} sm={6} md={3} key={index}>
+                      <Card className="song-card">
+                        <Skeleton variant="rectangular" height={160} />
+                        <CardContent>
+                          <Skeleton variant="text" width="80%" />
+                          <Skeleton variant="text" width="60%" />
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))
+                ) : (
+                  displaySongs.map(renderSongCard)
+                )}
+              </Grid>
             </section>
           )}
         </div>
-
-        {currentSong && (
-          <MusicPlayer
-            currentSong={currentSong}
-            onNext={() => {/* 实现下一首逻辑 */}}
-            onPrevious={() => {/* 实现上一首逻辑 */}}
-          />
-        )}
       </main>
+      <MobileNav />
+      {currentSong && (
+        <MusicPlayer
+          currentSong={currentSong}
+          onNext={() => {/* 实现下一首逻辑 */}}
+          onPrevious={() => {/* 实现上一首逻辑 */}}
+        />
+      )}
     </div>
   );
 }

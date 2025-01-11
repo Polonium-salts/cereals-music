@@ -10,7 +10,9 @@ import {
   VolumeOff,
   Favorite,
   FavoriteBorder,
-  QueueMusic
+  QueueMusic,
+  Repeat,
+  Shuffle
 } from '@mui/icons-material';
 import { IconButton, Slider, Typography, Tooltip } from '@mui/material';
 import MusicIcon from './MusicIcon';
@@ -22,6 +24,8 @@ export default function MusicPlayer({ currentSong, onNext, onPrevious }) {
   const [volume, setVolume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [isRepeat, setIsRepeat] = useState(false);
+  const [isShuffle, setIsShuffle] = useState(false);
   const audioRef = useRef(null);
   const previousVolumeRef = useRef(volume);
 
@@ -84,6 +88,16 @@ export default function MusicPlayer({ currentSong, onNext, onPrevious }) {
     setIsLiked(!isLiked);
   };
 
+  const toggleRepeat = () => {
+    setIsRepeat(!isRepeat);
+    audioRef.current.loop = !isRepeat;
+  };
+
+  const toggleShuffle = () => {
+    setIsShuffle(!isShuffle);
+    // TODO: 实现随机播放逻辑
+  };
+
   const formatTime = (time) => {
     if (!time) return '0:00';
     const minutes = Math.floor(time / 60);
@@ -133,35 +147,47 @@ export default function MusicPlayer({ currentSong, onNext, onPrevious }) {
           </Tooltip>
         </div>
 
-        <div className="player-controls">
-          <Tooltip title="上一首">
-            <IconButton onClick={onPrevious}>
-              <SkipPrevious />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={isPlaying ? '暂停' : '播放'}>
-            <IconButton 
-              className="play-button"
-              onClick={handlePlayPause}
-            >
-              {isPlaying ? <Pause /> : <PlayArrow />}
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="下一首">
-            <IconButton onClick={onNext}>
-              <SkipNext />
-            </IconButton>
-          </Tooltip>
-        </div>
+        <div className="player-controls-wrapper">
+          <div className="player-progress">
+            <span className="time">{formatTime(currentTime)}</span>
+            <Slider
+              size="small"
+              value={(currentTime / duration) * 100 || 0}
+              onChange={handleSliderChange}
+            />
+            <span className="time">{formatTime(duration)}</span>
+          </div>
 
-        <div className="player-progress">
-          <span className="time">{formatTime(currentTime)}</span>
-          <Slider
-            size="small"
-            value={(currentTime / duration) * 100 || 0}
-            onChange={handleSliderChange}
-          />
-          <span className="time">{formatTime(duration)}</span>
+          <div className="player-controls">
+            <Tooltip title={isShuffle ? '关闭随机播放' : '开启随机播放'}>
+              <IconButton onClick={toggleShuffle} color={isShuffle ? 'primary' : 'default'}>
+                <Shuffle />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="上一首">
+              <IconButton onClick={onPrevious}>
+                <SkipPrevious />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={isPlaying ? '暂停' : '播放'}>
+              <IconButton 
+                className="play-button"
+                onClick={handlePlayPause}
+              >
+                {isPlaying ? <Pause /> : <PlayArrow />}
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="下一首">
+              <IconButton onClick={onNext}>
+                <SkipNext />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={isRepeat ? '关闭单曲循环' : '开启单曲循环'}>
+              <IconButton onClick={toggleRepeat} color={isRepeat ? 'primary' : 'default'}>
+                <Repeat />
+              </IconButton>
+            </Tooltip>
+          </div>
         </div>
 
         <div className="volume-control">
