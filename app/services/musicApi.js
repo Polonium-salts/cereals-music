@@ -15,6 +15,18 @@ const kuGouApi = axios.create({
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
+  },
+  httpsAgent: new (require('https').Agent)({
+    rejectUnauthorized: false
+  })
+});
+
+// 创建QQ音乐API实例
+const qqMusicApi = axios.create({
+  baseURL: 'http://www.cqaibeibei.com/',
+  timeout: 15000,
+  headers: {
+    'Content-Type': 'application/json',
   }
 });
 
@@ -24,7 +36,9 @@ const addRetryInterceptor = (api) => {
     response => response,
     async error => {
       const { config, response } = error;
-      if (!response && config && !config._retry) {
+      if ((!response && config && !config._retry) || 
+          (error.code === 'ERR_CERT_COMMON_NAME_INVALID' || 
+           error.code === 'ERR_CERT_AUTHORITY_INVALID')) {
         config._retry = true;
         return new Promise(resolve => setTimeout(() => resolve(api(config)), 1000));
       }
@@ -35,21 +49,36 @@ const addRetryInterceptor = (api) => {
 
 addRetryInterceptor(neteaseApi);
 addRetryInterceptor(kuGouApi);
+addRetryInterceptor(qqMusicApi);
 
-// 搜索音乐（整合网易云和酷狗）
+// 搜索音乐（整合网易云、酷狗和QQ音乐）
 export const searchMusic = async (keywords) => {
   try {
-    // 并行发起两个平台的搜索请求
-    const [neteaseResults, kuGouResults] = await Promise.allSettled([
+    // 并行发起三个平台的搜索请求
+    const [neteaseResults, kuGouResults, qqResults] = await Promise.allSettled([
       searchNetease(keywords),
-      searchKuGou(keywords)
+      searchKuGou(keywords),
+      searchQQMusic(keywords)
     ]);
 
-    // 合并两个平台的结果
+    // 添加日志以检查每个平台的结果
+    console.log('网易云搜索结果数量:', neteaseResults.status === 'fulfilled' ? neteaseResults.value.length : 0);
+    console.log('酷狗搜索结果数量:', kuGouResults.status === 'fulfilled' ? kuGouResults.value.length : 0);
+    console.log('QQ音乐搜索结果数量:', qqResults.status === 'fulfilled' ? qqResults.value.length : 0);
+
+    // 合并三个平台的结果
     const results = [
       ...(neteaseResults.status === 'fulfilled' ? neteaseResults.value : []),
-      ...(kuGouResults.status === 'fulfilled' ? kuGouResults.value : [])
+      ...(kuGouResults.status === 'fulfilled' ? kuGouResults.value : []),
+      ...(qqResults.status === 'fulfilled' ? qqResults.value : [])
     ];
+
+    // 添加日志检查最终结果
+    console.log('合并后的总结果数量:', results.length);
+    console.log('平台分布:', results.reduce((acc, curr) => {
+      acc[curr.platform] = (acc[curr.platform] || 0) + 1;
+      return acc;
+    }, {}));
 
     // 按照歌曲名称和歌手排序
     return results.sort((a, b) => {
@@ -116,31 +145,96 @@ async function searchKuGou(keywords) {
     const response = await kuGouApi.get('/search', {
       params: {
         keywords,
-        limit: 50
-      }
+        limit: 50,
+        type: 1
+      },
+      httpsAgent: new (require('https').Agent)({
+        rejectUnauthorized: false
+      })
     });
 
-    if (!response.data?.data?.lists) {
+    if (!response.data?.result?.songs) {
       return [];
     }
 
-    return response.data.data.lists.map(song => ({
-      id: song.FileHash,
-      name: song.SongName,
-      artists: [{
-        id: song.SingerId,
-        name: song.SingerName
-      }],
-      album: {
-        id: song.AlbumID,
-        name: song.AlbumName,
-        picUrl: song.Image || null
-      },
-      duration: song.Duration * 1000, // 转换为毫秒
-      platform: 'kugou'
-    }));
+    const songIds = response.data.result.songs.map(song => song.hash).join(',');
+    const detailResponse = await kuGouApi.get('/playlist/detail', {
+      params: { ids: songIds },
+      httpsAgent: new (require('https').Agent)({
+        rejectUnauthorized: false
+      })
+    });
+
+    const songDetails = detailResponse.data?.songs || [];
+    const songDetailsMap = new Map(songDetails.map(song => [song.hash, song]));
+
+    return response.data.result.songs.map(song => {
+      const detail = songDetailsMap.get(song.hash);
+      return {
+        id: song.hash,
+        name: song.songname,
+        artists: [{
+          id: song.singerId || detail?.singerId || 0,
+          name: song.singername || detail?.singername || '未知歌手'
+        }],
+        album: {
+          id: detail?.album_id || song.album_id || 0,
+          name: detail?.album_name || song.album_name || '未知专辑',
+          picUrl: detail?.img || song.image || null
+        },
+        duration: (detail?.duration || song.duration) * 1000,
+        platform: 'kugou'
+      };
+    });
   } catch (error) {
     console.error('酷狗音乐搜索失败:', error);
+    return [];
+  }
+}
+
+// QQ音乐搜索
+async function searchQQMusic(keywords) {
+  try {
+    const response = await qqMusicApi.get('/getSearchByKey', {
+      params: {
+        keywords,
+        limit: 50,
+        type: 1
+      }
+    });
+
+    if (!response.data?.result?.songs) {
+      return [];
+    }
+
+    const songIds = response.data.result.songs.map(song => song.songmid).join(',');
+    const detailResponse = await qqMusicApi.get('/getSongLists', {
+      params: { ids: songIds }
+    });
+
+    const songDetails = detailResponse.data?.songs || [];
+    const songDetailsMap = new Map(songDetails.map(song => [song.songmid, song]));
+
+    return response.data.result.songs.map(song => {
+      const detail = songDetailsMap.get(song.songmid);
+      return {
+        id: song.songmid,
+        name: song.songname,
+        artists: song.singer.map(singer => ({
+          id: singer.mid,
+          name: singer.name
+        })),
+        album: {
+          id: song.albummid,
+          name: song.albumname,
+          picUrl: detail?.album?.picUrl || `https://y.gtimg.cn/music/photo_new/T002R300x300M000${song.albummid}.jpg`
+        },
+        duration: song.interval * 1000,
+        platform: 'qq'
+      };
+    });
+  } catch (error) {
+    console.error('QQ音乐搜索失败:', error);
     return [];
   }
 }
@@ -160,9 +254,19 @@ export const getMusicUrl = async (id, platform = 'netease') => {
       return url;
     } else if (platform === 'kugou') {
       const response = await kuGouApi.get('/song/url', {
-        params: { hash: id }
+        params: { id },
+        httpsAgent: new (require('https').Agent)({
+          rejectUnauthorized: false
+        })
       });
-      const url = response.data?.data?.play_url;
+      const url = response.data?.data?.[0]?.url;
+      if (!url) throw new Error('无法获取音乐URL');
+      return url;
+    } else if (platform === 'qq') {
+      const response = await qqMusicApi.get('/getImageUrl', {
+        params: { id }
+      });
+      const url = response.data?.data?.[0]?.url;
       if (!url) throw new Error('无法获取音乐URL');
       return url;
     }
@@ -172,17 +276,19 @@ export const getMusicUrl = async (id, platform = 'netease') => {
   }
 };
 
-// 获取歌单列表（整合两个平台）
+// 获取歌单列表（整合三个平台）
 export async function getPlaylists(limit = 30, cat = '全部') {
   try {
-    const [neteaseResults, kuGouResults] = await Promise.allSettled([
+    const [neteaseResults, kuGouResults, qqResults] = await Promise.allSettled([
       getNeteasePlaylists(limit, cat),
-      getKuGouPlaylists(limit)
+      getKuGouPlaylists(limit),
+      getQQPlaylists(limit)
     ]);
 
     const results = [
       ...(neteaseResults.status === 'fulfilled' ? neteaseResults.value : []),
-      ...(kuGouResults.status === 'fulfilled' ? kuGouResults.value : [])
+      ...(kuGouResults.status === 'fulfilled' ? kuGouResults.value : []),
+      ...(qqResults.status === 'fulfilled' ? qqResults.value : [])
     ];
 
     // 随机打乱结果
@@ -226,29 +332,70 @@ async function getNeteasePlaylists(limit, cat) {
 // 酷狗歌单
 async function getKuGouPlaylists(limit) {
   try {
-    const response = await kuGouApi.get('/playlist/list', {
-      params: { limit }
+    const response = await kuGouApi.get('/plist/index', {
+      params: {
+        page: 1,
+        pagesize: limit
+      }
     });
 
-    if (!response.data?.data?.list) return [];
+    if (!response.data?.data?.info) {
+      return [];
+    }
 
-    return response.data.data.list.map(playlist => ({
+    return response.data.data.info.map(playlist => ({
       id: playlist.specialid,
       name: playlist.specialname,
-      description: playlist.intro,
+      description: playlist.intro || '',
       coverUrl: playlist.imgurl,
-      songCount: playlist.songcount,
-      playCount: playlist.playcount,
+      songCount: playlist.songcount || 0,
+      playCount: playlist.playcount || 0,
       creator: {
-        id: playlist.userid,
-        name: playlist.username,
-        avatarUrl: playlist.user_avatar
+        id: playlist.creator?.id || 0,
+        name: playlist.creator?.name || '未知用户',
+        avatarUrl: playlist.creator?.avatar || null
       },
-      tags: playlist.tags?.split(',') || [],
+      tags: playlist.tags ? playlist.tags.split(',') : [],
       platform: 'kugou'
     }));
   } catch (error) {
     console.error('获取酷狗歌单失败:', error);
+    return [];
+  }
+}
+
+// QQ音乐歌单
+async function getQQPlaylists(limit) {
+  try {
+    const response = await qqMusicApi.get('/songlist/list', {
+      params: {
+        pageSize: limit,
+        pageNo: 1,
+        sort: 5 // 推荐歌单
+      }
+    });
+
+    if (!response.data?.list) {
+      return [];
+    }
+
+    return response.data.list.map(playlist => ({
+      id: playlist.tid,
+      name: playlist.title,
+      description: playlist.desc || '',
+      coverUrl: playlist.pic_url,
+      songCount: playlist.song_cnt || 0,
+      playCount: playlist.access_cnt || 0,
+      creator: {
+        id: playlist.creator_info?.uid || 0,
+        name: playlist.creator_info?.nick || '未知用户',
+        avatarUrl: playlist.creator_info?.avatar || null
+      },
+      tags: playlist.tags || [],
+      platform: 'qq'
+    }));
+  } catch (error) {
+    console.error('获取QQ音乐歌单失败:', error);
     return [];
   }
 }
@@ -285,19 +432,21 @@ export const getMusicDetail = async (id) => {
   }
 };
 
-// 获取热门歌曲（整合两个平台）
+// 获取热门歌曲（整合三个平台）
 export const getHotSongs = async (limit = 30) => {
   try {
-    // 并行获取两个平台的热门歌曲
-    const [neteaseResults, kuGouResults] = await Promise.allSettled([
-      getNeteaseSongs(Math.ceil(limit / 2)),
-      getKuGouSongs(Math.ceil(limit / 2))
+    // 并行获取三个平台的热门歌曲
+    const [neteaseResults, kuGouResults, qqResults] = await Promise.allSettled([
+      getNeteaseSongs(Math.ceil(limit / 3)),
+      getKuGouSongs(Math.ceil(limit / 3)),
+      getQQHotSongs(Math.ceil(limit / 3))
     ]);
 
-    // 合并两个平台的结果
+    // 合并三个平台的结果
     const results = [
       ...(neteaseResults.status === 'fulfilled' ? neteaseResults.value : []),
-      ...(kuGouResults.status === 'fulfilled' ? kuGouResults.value : [])
+      ...(kuGouResults.status === 'fulfilled' ? kuGouResults.value : []),
+      ...(qqResults.status === 'fulfilled' ? qqResults.value : [])
     ];
 
     // 随机打乱结果并限制数量
@@ -345,34 +494,71 @@ async function getNeteaseSongs(limit) {
 // 获取酷狗热门歌曲
 async function getKuGouSongs(limit) {
   try {
-    const response = await kuGouApi.get('/song/list', {
+    const response = await kuGouApi.get('/rank/songs', {
       params: {
-        limit,
-        order: 'hot'
+        rankid: 8888,
+        page: 1,
+        pagesize: limit
       }
     });
 
-    if (!response.data?.data?.lists) {
+    if (!response.data?.data?.info) {
       return [];
     }
 
-    return response.data.data.lists.map(song => ({
-      id: song.FileHash,
-      name: song.SongName,
+    return response.data.data.info.map(song => ({
+      id: song.hash,
+      name: song.songname,
       artists: [{
-        id: song.SingerId,
-        name: song.SingerName
+        id: song.singerId || 0,
+        name: song.singername
       }],
       album: {
-        id: song.AlbumID,
-        name: song.AlbumName,
-        picUrl: song.Image || null
+        id: song.album_id || 0,
+        name: song.album_name || '未知专辑',
+        picUrl: song.image || null
       },
-      duration: song.Duration * 1000,
+      duration: song.duration * 1000,
       platform: 'kugou'
     }));
   } catch (error) {
     console.error('获取酷狗热门歌曲失败:', error);
+    return [];
+  }
+}
+
+// 获取QQ音乐热门歌曲
+async function getQQHotSongs(limit) {
+  try {
+    const response = await qqMusicApi.get('/top/songs', {
+      params: {
+        pageSize: limit,
+        pageNo: 1,
+        id: 26 // 热歌榜
+      }
+    });
+
+    if (!response.data?.list) {
+      return [];
+    }
+
+    return response.data.list.map(song => ({
+      id: song.mid,
+      name: song.name,
+      artists: [{
+        id: song.singer_id,
+        name: song.singer
+      }],
+      album: {
+        id: song.album_id || 0,
+        name: song.album_name || '未知专辑',
+        picUrl: song.pic || null
+      },
+      duration: song.interval * 1000,
+      platform: 'qq'
+    }));
+  } catch (error) {
+    console.error('获取QQ音乐热门歌曲失败:', error);
     return [];
   }
 }
@@ -404,40 +590,84 @@ export async function getPlaylistCategories() {
 }
 
 // 获取歌单详情
-export async function getPlaylistDetail(id) {
+export async function getPlaylistDetail(id, platform = 'netease') {
   try {
-    const response = await api.get(`/playlist/detail`, {
-      params: { id }
-    });
+    if (platform === 'netease') {
+      const response = await api.get(`/playlist/detail`, {
+        params: { id }
+      });
 
-    if (response.data.playlist) {
-      const playlist = response.data.playlist;
-      return {
-        id: playlist.id,
-        name: playlist.name,
-        description: playlist.description,
-        coverUrl: playlist.coverImgUrl,
-        songCount: playlist.trackCount,
-        playCount: playlist.playCount,
-        creator: {
-          id: playlist.creator.userId,
-          name: playlist.creator.nickname,
-          avatarUrl: playlist.creator.avatarUrl
-        },
-        tags: playlist.tags,
-        tracks: playlist.tracks?.map(track => ({
-          id: track.id,
-          name: track.name,
-          artists: track.ar?.map(artist => ({
-            id: artist.id,
-            name: artist.name
-          })),
-          album: {
-            id: track.al?.id,
-            name: track.al?.name,
-            picUrl: track.al?.picUrl
+      if (response.data.playlist) {
+        const playlist = response.data.playlist;
+        return {
+          id: playlist.id,
+          name: playlist.name,
+          description: playlist.description,
+          coverUrl: playlist.coverImgUrl,
+          songCount: playlist.trackCount,
+          playCount: playlist.playCount,
+          creator: {
+            id: playlist.creator.userId,
+            name: playlist.creator.nickname,
+            avatarUrl: playlist.creator.avatarUrl
           },
-          duration: track.dt
+          tags: playlist.tags,
+          tracks: playlist.tracks?.map(track => ({
+            id: track.id,
+            name: track.name,
+            artists: track.ar?.map(artist => ({
+              id: artist.id,
+              name: artist.name
+            })),
+            album: {
+              id: track.al?.id,
+              name: track.al?.name,
+              picUrl: track.al?.picUrl
+            },
+            duration: track.dt
+          }))
+        };
+      }
+      return null;
+    } else if (platform === 'kugou') {
+      // ... 添加酷狗音乐逻辑 ...
+    } else if (platform === 'qq') {
+      const response = await qqMusicApi.get('/songlist/detail', {
+        params: { id }
+      });
+
+      if (!response.data) {
+        return null;
+      }
+
+      const playlist = response.data;
+      return {
+        id: playlist.tid,
+        name: playlist.title,
+        description: playlist.desc || '',
+        coverUrl: playlist.pic_url,
+        songCount: playlist.song_cnt || 0,
+        playCount: playlist.access_cnt || 0,
+        creator: {
+          id: playlist.creator_info?.uid || 0,
+          name: playlist.creator_info?.nick || '未知用户',
+          avatarUrl: playlist.creator_info?.avatar || null
+        },
+        tags: playlist.tags || [],
+        platform: 'qq',
+        tracks: (playlist.songlist || []).map(track => ({
+          id: track.mid,
+          name: track.name,
+          artists: [{
+            id: track.singer_id,
+            name: track.singer
+          }],
+          album: {
+            id: track.album_id || 0,
+            name: track.album_name || '未知专辑',
+            picUrl: track.pic || null
+          },
+          duration: track.interval * 1000
         }))
       };
     }
