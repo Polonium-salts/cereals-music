@@ -8,10 +8,7 @@ import {
   PlayArrow,
   GridView,
   ViewList,
-  MoreVert,
-  YouTube,
-  CloudQueue,
-  Album
+  MoreVert
 } from '@mui/icons-material';
 import { 
   IconButton, 
@@ -97,7 +94,7 @@ export default function HomePage() {
 
   const handlePlaySong = async (song) => {
     try {
-      const url = await getMusicUrl(song.id);
+      const url = await getMusicUrl(song);
       if (url) {
         setCurrentSong({ ...song, url });
       } else {
@@ -109,35 +106,12 @@ export default function HomePage() {
     }
   };
 
-  const getPlatformIcon = (platform) => {
-    switch (platform) {
-      case 'netease':
-        return <CloudQueue />;
-      case 'kugou':
-        return <YouTube />;
-      case 'spotify':
-        return <Album />;
-      default:
-        return null;
-    }
-  };
-
-  const getPlatformLabel = (platform) => {
-    switch (platform) {
-      case 'netease':
-        return '网易云';
-      case 'kugou':
-        return '酷狗';
-      case 'spotify':
-        return 'Spotify';
-      default:
-        return '';
-    }
-  };
-
   const renderSongCard = (song) => (
-    <Grid item xs={12} sm={6} md={3} key={song.id}>
-      <Card className="song-card" onClick={() => handlePlaySong(song)}>
+    <Grid item xs={12} sm={6} md={3} key={`${song.platform}-${song.id}`}>
+      <Card 
+        className="song-card"
+        onClick={() => handlePlaySong(song)}
+      >
         <div className="card-media-container">
           {song.album?.picUrl ? (
             <CardMedia
@@ -156,10 +130,9 @@ export default function HomePage() {
             <PlayArrow className="play-icon" />
           </div>
           <Chip
-            icon={getPlatformIcon(song.platform)}
-            label={getPlatformLabel(song.platform)}
-            className={`platform-chip ${song.platform}`}
             size="small"
+            label={song.platform === 'netease' ? '网易云' : '酷狗'}
+            className={`platform-chip ${song.platform}`}
           />
         </div>
         <CardContent>
@@ -195,17 +168,7 @@ export default function HomePage() {
         )}
       </ListItemAvatar>
       <ListItemText
-        primary={
-          <div className="song-list-title">
-            <span>{song.name}</span>
-            <Chip
-              icon={getPlatformIcon(song.platform)}
-              label={getPlatformLabel(song.platform)}
-              className={`platform-chip ${song.platform}`}
-              size="small"
-            />
-          </div>
-        }
+        primary={song.name}
         secondary={song.artists?.map(artist => artist.name).join(', ')}
         className="song-list-text"
       />
