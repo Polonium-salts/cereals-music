@@ -49,19 +49,35 @@ export const searchMusic = async (keywords) => {
     const maxPages = 10; // 限制最大页数，防止请求过多
     const actualPages = Math.min(pages, maxPages);
 
-    // 并行请求所有页的数据
-    const searchPromises = [];
-    for (let page = 0; page < actualPages; page++) {
-      searchPromises.push(searchNetease(keywords, page + 1, pageSize));
+    // 分批并行请求数据，每批5页
+    const batchSize = 5;
+    const allSongs = [];
+    const batchPromises = [];
+    
+    // 准备所有搜索请求
+    for (let page = 1; page <= actualPages; page++) {
+      batchPromises.push(searchNetease(keywords, page, pageSize));
+      
+      // 每到一个批次就执行
+      if (batchPromises.length === batchSize || page === actualPages) {
+        const batchResults = await Promise.all(batchPromises);
+        allSongs.push(...batchResults.flat());
+        batchPromises.length = 0; // 清空数组
+      }
     }
-
-    const results = await Promise.all(searchPromises);
-    const allSongs = results.flat();
 
     console.log('实际获取的歌曲数量:', allSongs.length);
 
-    // 按照歌曲名称和歌手排序
-    return allSongs.sort((a, b) => {
+    // 使用Map进行去重和快速查找
+    const uniqueSongsMap = new Map();
+    allSongs.forEach(song => {
+      if (!uniqueSongsMap.has(song.id)) {
+        uniqueSongsMap.set(song.id, song);
+      }
+    });
+
+    // 转换回数组并排序
+    return Array.from(uniqueSongsMap.values()).sort((a, b) => {
       const nameCompare = a.name.localeCompare(b.name);
       if (nameCompare !== 0) return nameCompare;
       return a.artists[0]?.name.localeCompare(b.artists[0]?.name);
@@ -90,29 +106,24 @@ async function searchNetease(keywords, page = 1, pageSize = 100) {
     }
 
     const songs = response.data.result.songs;
-    const batchSize = 50; // 每批获取详情的数量
-    const allSongDetails = [];
-
-    // 分批获取歌曲详情
-    for (let i = 0; i < songs.length; i += batchSize) {
-      const batch = songs.slice(i, i + batchSize);
-      const songIds = batch.map(song => song.id).join(',');
+    
+    // 只获取没有专辑图片的歌曲的详情
+    const songsNeedingDetails = songs.filter(song => !song.album.picUrl);
+    let songDetails = [];
+    
+    if (songsNeedingDetails.length > 0) {
       try {
+        const songIds = songsNeedingDetails.map(song => song.id).join(',');
         const detailResponse = await neteaseApi.get('/song/detail', {
           params: { ids: songIds }
         });
-        if (detailResponse.data?.songs) {
-          allSongDetails.push(...detailResponse.data.songs);
-        }
-        // 添加延迟，避免请求过快
-        await new Promise(resolve => setTimeout(resolve, 50));
+        songDetails = detailResponse.data?.songs || [];
       } catch (error) {
-        console.error(`获取歌曲详情批次 ${i / batchSize + 1} 失败:`, error);
-        continue;
+        console.error('获取歌曲详情失败:', error);
       }
     }
 
-    const songDetailsMap = new Map(allSongDetails.map(song => [song.id, song]));
+    const songDetailsMap = new Map(songDetails.map(song => [song.id, song]));
 
     return songs.map(song => {
       const detail = songDetailsMap.get(song.id);
@@ -126,7 +137,7 @@ async function searchNetease(keywords, page = 1, pageSize = 100) {
         album: {
           id: song.album.id,
           name: song.album.name,
-          picUrl: detail?.al?.picUrl || song.album.picUrl || null
+          picUrl: song.album.picUrl || detail?.al?.picUrl || null
         },
         duration: song.duration
       };

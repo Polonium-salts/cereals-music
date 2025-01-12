@@ -50,7 +50,7 @@ export default function HomePage() {
   const [hotSongs, setHotSongs] = useState([]);
   const [displaySongs, setDisplaySongs] = useState([]);
   const [isLoadingHotSongs, setIsLoadingHotSongs] = useState(true);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('list'); // 'grid' or 'list'
 
   // 获取热门歌曲并随机选择12首
   useEffect(() => {
