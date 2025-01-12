@@ -133,7 +133,6 @@ export default function HomePage() {
           </div>
           <Chip
             icon={song.platform === 'netease' ? <CloudQueue /> : <YouTube />}
-            label={song.platform === 'netease' ? '网易云' : '酷狗'}
             className={`platform-chip ${song.platform}`}
             size="small"
           />
@@ -176,7 +175,6 @@ export default function HomePage() {
             {song.name}
             <Chip
               icon={song.platform === 'netease' ? <CloudQueue /> : <YouTube />}
-              label={song.platform === 'netease' ? '网易云' : '酷狗'}
               className={`platform-chip ${song.platform}`}
               size="small"
             />
