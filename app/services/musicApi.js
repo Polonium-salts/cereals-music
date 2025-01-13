@@ -1,9 +1,12 @@
 import axios from 'axios';
 
+// API 基础配置
+const API_BASE_URL = 'https://wapi.vip247.icu';
+
 // 创建网易云音乐API实例
 const neteaseApi = axios.create({
-  baseURL: 'https://wapi.vip247.icu/',
-  timeout: 15000,
+  baseURL: API_BASE_URL,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   }
@@ -149,60 +152,23 @@ async function searchNetease(keywords, page = 1, pageSize = 100) {
 }
 
 // 获取音乐URL
-export const getMusicUrl = async (id, platform = 'netease') => {
+export async function getMusicUrl(id) {
   try {
-    const response = await neteaseApi.get('/song/url', {
-      params: { 
+    const response = await neteaseApi.get(`/song/url/v1`, {
+      params: {
         id,
-        realIP: '116.25.146.177'
+        level: 'standard',
+        timestamp: Date.now()
       }
     });
-    const url = response.data?.data?.[0]?.url;
-    if (!url) throw new Error('无法获取音乐URL');
-    return url;
+    
+    if (response.data.code !== 200) {
+      throw new Error(response.data.msg || '获取音乐URL失败');
+    }
+    return response.data.data[0]?.url;
   } catch (error) {
     console.error('获取音乐URL失败:', error);
     throw error;
-  }
-};
-
-// 获取歌单列表
-export async function getPlaylists(limit = 30, cat = '全部') {
-  try {
-    const results = await getNeteasePlaylists(limit, cat);
-    return results;
-  } catch (error) {
-    console.error('获取歌单列表失败:', error);
-    throw new Error('获取歌单列表失败');
-  }
-}
-
-// 网易云歌单
-async function getNeteasePlaylists(limit, cat) {
-  try {
-    const response = await neteaseApi.get('/top/playlist', {
-      params: { limit, cat, offset: 0, order: 'hot' }
-    });
-
-    if (!response.data?.playlists) return [];
-
-    return response.data.playlists.map(playlist => ({
-      id: playlist.id,
-      name: playlist.name,
-      description: playlist.description,
-      coverUrl: playlist.coverImgUrl,
-      songCount: playlist.trackCount,
-      playCount: playlist.playCount,
-      creator: {
-        id: playlist.creator.userId,
-        name: playlist.creator.nickname,
-        avatarUrl: playlist.creator.avatarUrl
-      },
-      tags: playlist.tags
-    }));
-  } catch (error) {
-    console.error('获取网易云歌单失败:', error);
-    return [];
   }
 }
 
@@ -245,76 +211,5 @@ async function getNeteaseSongs(limit) {
   } catch (error) {
     console.error('获取网易云热门歌曲失败:', error);
     return [];
-  }
-}
-
-// 获取歌单分类
-export async function getPlaylistCategories() {
-  try {
-    const response = await neteaseApi.get('/playlist/catlist');
-    if (response.data.categories) {
-      const categories = [];
-      Object.keys(response.data.categories).forEach(key => {
-        const category = response.data.categories[key];
-        const subs = response.data.sub.filter(item => item.category === parseInt(key));
-        categories.push({
-          name: category,
-          subs: subs.map(sub => ({
-            name: sub.name,
-            hot: sub.hot
-          }))
-        });
-      });
-      return categories;
-    }
-    return [];
-  } catch (error) {
-    console.error('获取歌单分类失败:', error);
-    throw new Error('获取歌单分类失败');
-  }
-}
-
-// 获取歌单详情
-export async function getPlaylistDetail(id) {
-  try {
-    const response = await neteaseApi.get(`/playlist/detail`, {
-      params: { id }
-    });
-
-    if (response.data.playlist) {
-      const playlist = response.data.playlist;
-      return {
-        id: playlist.id,
-        name: playlist.name,
-        description: playlist.description,
-        coverUrl: playlist.coverImgUrl,
-        songCount: playlist.trackCount,
-        playCount: playlist.playCount,
-        creator: {
-          id: playlist.creator.userId,
-          name: playlist.creator.nickname,
-          avatarUrl: playlist.creator.avatarUrl
-        },
-        tags: playlist.tags,
-        tracks: playlist.tracks?.map(track => ({
-          id: track.id,
-          name: track.name,
-          artists: track.ar?.map(artist => ({
-            id: artist.id,
-            name: artist.name
-          })),
-          album: {
-            id: track.al?.id,
-            name: track.al?.name,
-            picUrl: track.al?.picUrl
-          },
-          duration: track.dt
-        }))
-      };
-    }
-    return null;
-  } catch (error) {
-    console.error('获取歌单详情失败:', error);
-    throw new Error('获取歌单详情失败');
   }
 } 

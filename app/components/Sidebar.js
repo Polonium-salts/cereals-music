@@ -61,13 +61,11 @@ export default function Sidebar() {
 
   const mainNavItems = [
     { icon: <HomeIcon />, label: '发现音乐', path: '/' },
-    { icon: <LibraryMusic />, label: '歌单广场', path: '/playlists' },
     { icon: <Album />, label: '新碟上架', path: '/albums' },
   ];
 
   const personalNavItems = [
     { icon: <Favorite />, label: '我喜欢的', path: '/my/likes' },
-    { icon: <PlaylistPlay />, label: '我的歌单', path: '/my/playlists' },
     { icon: <History />, label: '最近播放', path: '/my/history' },
     { icon: <Settings />, label: '设置', path: '/settings' },
   ];

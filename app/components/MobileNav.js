@@ -16,7 +16,6 @@ export default function MobileNav() {
   const navItems = [
     { icon: <HomeIcon />, label: '发现', path: '/' },
     { icon: <Search />, label: '搜索', path: '/search' },
-    { icon: <LibraryMusic />, label: '歌单', path: '/playlists' },
     { icon: <Favorite />, label: '收藏', path: '/my/likes' },
     { icon: <Person />, label: '我的', path: '/my/profile' },
   ];

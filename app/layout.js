@@ -6,6 +6,7 @@ export const metadata = {
 };
 
 import ClientLayout from './ClientLayout';
+import { PlayerProvider } from './contexts/PlayerContext';
 
 export default function RootLayout({ children }) {
   return (
@@ -17,7 +18,9 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        <ClientLayout>{children}</ClientLayout>
+        <PlayerProvider>
+          <ClientLayout>{children}</ClientLayout>
+        </PlayerProvider>
       </body>
     </html>
   );
