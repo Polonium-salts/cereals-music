@@ -235,14 +235,127 @@ body {
   right: 0;
   height: var(--player-height);
   background: var(--player-background);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border);
-  box-shadow: 0 -2px 10px var(--shadow-color);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border-color);
   z-index: 1000;
-  padding: 0 2rem;
+  transition: all 0.3s ease;
+}
+
+.player-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 300px 1fr 200px;
+  align-items: center;
+  gap: 24px;
+}
+
+/* 移动端优化样式 */
+@media (max-width: 768px) {
+  :root {
+    --player-height: 140px;
+  }
+
+  .music-player {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .player-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .song-info {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .album-cover {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+  }
+
+  .song-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .song-name {
+    font-size: 14px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .artist-name {
+    font-size: 12px !important;
+  }
+
+  .player-controls-wrapper {
+    width: 100%;
+  }
+
+  .player-controls {
+    justify-content: space-around;
+    padding: 0 8px;
+  }
+
+  .control-button {
+    padding: 8px !important;
+  }
+
+  .volume-control {
+    display: none !important;
+  }
+
+  .player-progress {
+    margin-bottom: 8px;
+  }
+
+  .time {
+    font-size: 12px;
+  }
+}
+
+/* 触摸优化 */
+@media (hover: none) {
+  .control-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .player-progress .MuiSlider-thumb {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* 播放速率控制样式 */
+.playback-rate-control {
   display: flex;
   align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.playback-rate-button {
+  padding: 4px 8px !important;
+  min-width: unset !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+}
+
+@media (max-width: 768px) {
+  .playback-rate-control {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+  }
 }
 
 /* Material-UI 组件样式覆盖 */
@@ -1697,604 +1810,6 @@ body {
 }
 
 /* 加载动画 */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.loading-skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--card-background) 25%,
-    var(--hover-background) 50%,
-    var(--card-background) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-/* 创建歌单页面样式 */
-.create-playlist-container {
-  padding: 2rem 0;
-}
-
-.cover-upload-card {
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--card-background);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px var(--shadow-color);
-}
-
-.upload-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  text-align: center;
-}
-
-.cover-preview-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.cover-preview {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.remove-image-btn {
-  position: absolute !important;
-  top: 8px;
-  right: 8px;
-  background-color: rgba(0, 0, 0, 0.6) !important;
-  color: white !important;
-}
-
-.remove-image-btn:hover {
-  background-color: rgba(0, 0, 0, 0.8) !important;
-}
-
-/* 响应式布局调整 */
-@media (max-width: 900px) {
-  .create-playlist-container {
-    padding: 1rem;
-  }
-  
-  .cover-upload-card {
-    max-width: 300px;
-    margin: 0 auto;
-  }
-}
-
-/* 搜索提示样式 */
-.search-tips {
-  background: var(--card-background);
-  border-radius: 8px;
-  padding: 1rem;
-  border: 1px solid var(--border);
-}
-
-/* 创建歌单按钮 */
-.create-playlist-fab {
-  position: fixed !important;
-  bottom: 2rem;
-  right: 2rem;
-  z-index: 1000;
-}
-
-/* 搜索建议样式 */
-.MuiAutocomplete-popper {
-  margin-top: 4px !important;
-}
-
-.MuiAutocomplete-paper {
-  background: var(--card-background) !important;
-  border: 1px solid var(--border) !important;
-  box-shadow: 0 4px 12px var(--shadow-color) !important;
-}
-
-.MuiAutocomplete-option {
-  padding: 8px 16px !important;
-  min-height: 48px !important;
-}
-
-.MuiAutocomplete-option:hover {
-  background-color: var(--hover-background) !important;
-}
-
-.MuiAutocomplete-option[aria-selected="true"] {
-  background-color: var(--hover-background) !important;
-}
-
-/* 响应式布局调整 */
-@media (max-width: 600px) {
-  .create-playlist-fab {
-    bottom: 1rem;
-    right: 1rem;
-  }
-
-  .search-tips {
-    margin: 0 -1rem;
-    border-radius: 0;
-  }
-}
-
-/* 歌单广场页面样式 */
-.section-header-wrapper {
-  position: relative;
-  margin-bottom: 3rem;
-  padding: 3rem;
-  border-radius: 32px;
-  background: linear-gradient(135deg, 
-    rgba(var(--primary-rgb), 0.1),
-    rgba(var(--secondary-rgb), 0.05)
-  );
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  overflow: hidden;
-}
-
-.section-header-wrapper::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(
-    circle at top right,
-    rgba(var(--primary-rgb), 0.2),
-    transparent 70%
-  );
-  pointer-events: none;
-}
-
-.header-content {
-  position: relative;
-  z-index: 1;
-  margin-bottom: 2rem;
-}
-
-.page-title {
-  font-size: 3.5rem !important;
-  font-weight: 800 !important;
-  background: linear-gradient(45deg, 
-    var(--primary-color), 
-    var(--secondary-color)
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 1rem !important;
-  letter-spacing: -1px;
-  line-height: 1.2 !important;
-}
-
-.subtitle {
-  font-size: 1.25rem !important;
-  color: var(--text-secondary) !important;
-  max-width: 600px;
-  line-height: 1.6 !important;
-  opacity: 0.8;
-}
-
-.search-filter-container {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.search-wrapper {
-  flex: 1;
-  max-width: 500px;
-}
-
-.search-input {
-  background: var(--card-background) !important;
-  border-radius: 16px !important;
-  height: 56px !important;
-  padding: 0 1.5rem !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease !important;
-}
-
-.search-input:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-}
-
-.search-input .MuiInputAdornment-root {
-  margin-right: 0.5rem;
-}
-
-.category-button {
-  height: 56px !important;
-  min-width: 160px !important;
-  border-radius: 16px !important;
-  padding: 0 1.5rem !important;
-  font-size: 1rem !important;
-  background: var(--card-background) !important;
-  border-color: transparent !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease !important;
-}
-
-.category-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-  background: var(--hover-background) !important;
-}
-
-.category-menu {
-  margin-top: 8px !important;
-  border-radius: 16px !important;
-  padding: 0.5rem !important;
-  background: var(--card-background) !important;
-  border: none !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
-}
-
-.category-menu-item {
-  border-radius: 12px !important;
-  margin: 0.25rem !important;
-  padding: 0.75rem 1.25rem !important;
-  transition: all 0.2s ease !important;
-}
-
-.category-menu-item:hover {
-  background: var(--hover-background) !important;
-  transform: translateX(4px);
-}
-
-.search-tips {
-  background: var(--card-background);
-  border-radius: 16px;
-  padding: 1.5rem;
-  margin-top: 1rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
-.tips-title {
-  font-weight: 600 !important;
-  margin-bottom: 1rem !important;
-  color: var(--text-primary) !important;
-}
-
-.tips-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.tip-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: var(--text-secondary);
-}
-
-.tip-icon {
-  font-size: 1.25rem !important;
-  opacity: 0.7;
-}
-
-.playlists-container {
-  margin-top: 2rem;
-}
-
-.playlist-grid-item {
-  animation: fadeInUp 0.6s ease backwards;
-  animation-delay: var(--animation-delay);
-}
-
-.playlist-card {
-  position: relative;
-  border-radius: 24px !important;
-  overflow: hidden;
-  background: var(--card-background);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-}
-
-.playlist-card:hover {
-  transform: translateY(-12px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.16);
-}
-
-.playlist-media {
-  position: relative;
-  padding-top: 100%;
-  overflow: hidden;
-  border-radius: 12px;
-}
-
-.playlist-cover {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.playlist-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.6));
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 12px;
-}
-
-.playlist-card:hover .playlist-overlay {
-  opacity: 1;
-}
-
-.playlist-card:hover .playlist-cover {
-  transform: scale(1.05);
-}
-
-.playlist-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-.play-count {
-  display: flex;
-  align-items: center;
-  color: white;
-  font-size: 0.875rem;
-}
-
-.count-icon {
-  font-size: 1rem;
-  margin-right: 4px;
-}
-
-.play-button {
-  background-color: #1db954 !important;
-  color: white !important;
-  transition: transform 0.2s ease !important;
-}
-
-.play-button:hover {
-  transform: scale(1.1) !important;
-  background-color: #1ed760 !important;
-}
-
-.playlist-content {
-  padding: 16px !important;
-}
-
-.playlist-title {
-  font-weight: 600 !important;
-  margin-bottom: 8px !important;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.playlist-creator {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.creator-avatar {
-  width: 24px !important;
-  height: 24px !important;
-  margin-right: 8px !important;
-}
-
-.creator-name {
-  color: rgba(0, 0, 0, 0.6);
-  font-size: 0.875rem !important;
-}
-
-.dark-theme .creator-name {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.playlist-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.playlist-tag {
-  background-color: rgba(0, 0, 0, 0.08) !important;
-  color: rgba(0, 0, 0, 0.6) !important;
-}
-
-.dark-theme .playlist-tag {
-  background-color: rgba(255, 255, 255, 0.08) !important;
-  color: rgba(255, 255, 255, 0.6) !important;
-}
-
-.load-more-container {
-  display: flex;
-  justify-content: center;
-  margin: 4rem 0;
-}
-
-.load-more-btn {
-  min-width: 200px !important;
-  height: 56px !important;
-  border-radius: 28px !important;
-  font-size: 1rem !important;
-  font-weight: 600 !important;
-  text-transform: none !important;
-  background: var(--card-background) !important;
-  border: none !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
-  transition: all 0.3s ease !important;
-}
-
-.load-more-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
-}
-
-.create-playlist-fab {
-  position: fixed !important;
-  bottom: 2rem;
-  right: 2rem;
-  width: 64px !important;
-  height: 64px !important;
-  border-radius: 32px !important;
-  background: linear-gradient(45deg, 
-    var(--primary-color), 
-    var(--secondary-color)
-  ) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-.create-playlist-fab:hover {
-  transform: scale(1.1) rotate(90deg);
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3) !important;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 响应式布局 */
-@media (max-width: 1200px) {
-  .page-title {
-    font-size: 3rem !important;
-  }
-
-  .search-filter-container {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .search-wrapper {
-    max-width: none;
-  }
-}
-
-@media (max-width: 900px) {
-  .section-header-wrapper {
-    padding: 2rem;
-    border-radius: 24px;
-  }
-
-  .page-title {
-    font-size: 2.5rem !important;
-  }
-
-  .subtitle {
-    font-size: 1.1rem !important;
-  }
-
-  .playlist-grid-item {
-    padding: 0.75rem !important;
-  }
-}
-
-@media (max-width: 600px) {
-  .section-header-wrapper {
-    padding: 1.5rem;
-    border-radius: 20px;
-    margin-bottom: 2rem;
-  }
-
-  .page-title {
-    font-size: 2rem !important;
-  }
-
-  .subtitle {
-    font-size: 1rem !important;
-  }
-
-  .search-input,
-  .category-button {
-    height: 48px !important;
-  }
-
-  .playlist-card {
-    border-radius: 20px !important;
-  }
-
-  .create-playlist-fab {
-    width: 56px !important;
-    height: 56px !important;
-    bottom: 1.5rem;
-    right: 1.5rem;
-  }
-}
-
-/* 暗色主题适配 */
-.dark-theme .section-header-wrapper {
-  background: linear-gradient(135deg,
-    rgba(var(--primary-rgb), 0.15),
-    rgba(var(--secondary-rgb), 0.1)
-  );
-}
-
-.dark-theme .playlist-card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-}
-
-.dark-theme .playlist-overlay {
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.4),
-    rgba(0, 0, 0, 0.7)
-  );
-}
-
-.dark-theme .playlist-tag {
-  background: rgba(var(--primary-rgb), 0.2) !important;
-}
-
-.dark-theme .search-input,
-.dark-theme .category-button,
-.dark-theme .search-tips,
-.dark-theme .category-menu {
-  background: rgba(255, 255, 255, 0.05) !important;
-  backdrop-filter: blur(10px);
-}
-
-.dark-theme .load-more-btn {
-  background: rgba(255, 255, 255, 0.05) !important;
-  backdrop-filter: blur(10px);
-}
-
-/* 动画关键帧 */
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
