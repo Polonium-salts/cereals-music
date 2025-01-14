@@ -413,4 +413,37 @@ async function getNeteaseSongs(limit) {
     console.error('获取网易云热门歌曲失败:', error);
     return [];
   }
-} 
+}
+
+// 从Git仓库导入音乐
+export const importMusicFromGit = async (gitUrl) => {
+  try {
+    const response = await api.post('/import/git', {
+      url: gitUrl
+    });
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || '导入失败');
+    }
+
+    return {
+      success: true,
+      albums: response.data.albums.map(album => ({
+        id: album.id,
+        name: album.name,
+        artist: album.artist,
+        coverUrl: album.coverUrl,
+        songs: album.songs.map(song => ({
+          id: song.id,
+          name: song.name,
+          artists: song.artists,
+          duration: song.duration,
+          url: song.url
+        }))
+      }))
+    };
+  } catch (error) {
+    console.error('导入音乐失败:', error);
+    throw new Error('导入音乐失败，请检查Git仓库地址是否正确');
+  }
+}; 

@@ -1,4 +1,3 @@
-@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -255,71 +254,189 @@ body {
 /* 移动端优化样式 */
 @media (max-width: 768px) {
   :root {
-    --player-height: 140px;
+    --player-height: 160px;
   }
 
   .music-player {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding: 12px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
   }
 
   .player-content {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
-    padding: 12px;
+    grid-template-rows: auto 1fr auto;
+    padding: 0;
     gap: 12px;
   }
 
   .song-info {
-    display: flex;
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
     align-items: center;
-    justify-content: flex-start;
     gap: 12px;
   }
 
   .album-cover {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
     border-radius: 8px;
   }
 
   .song-details {
-    flex: 1;
     min-width: 0;
+    padding-right: 8px;
   }
 
   .song-name {
-    font-size: 14px !important;
-    margin-bottom: 2px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    margin-bottom: 4px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .artist-name {
-    font-size: 12px !important;
+    font-size: 13px !important;
+    opacity: 0.8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .player-controls-wrapper {
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .player-progress {
+    margin: 4px 0;
+    align-items: center;
+    gap: 8px;
+    touch-action: none;
+    padding: 8px 0;
+  }
+
+  .time {
+    font-size: 12px;
+    min-width: 40px;
+    opacity: 0.8;
   }
 
   .player-controls {
-    justify-content: space-around;
-    padding: 0 8px;
+    justify-content: space-between;
+    padding: 4px 16px;
   }
 
   .control-button {
     padding: 8px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  .play-button {
+    width: 48px !important;
+    height: 48px !important;
+    padding: 12px !important;
+    background: var(--primary-color) !important;
+    color: white !important;
+    border-radius: 50% !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .play-button:active {
+    transform: scale(0.95);
   }
 
   .volume-control {
     display: none !important;
   }
 
-  .player-progress {
-    margin-bottom: 8px;
+  /* 滑块样式优化 */
+  .MuiSlider-root {
+    padding: 12px 0 !important;
   }
 
-  .time {
-    font-size: 12px;
+  .MuiSlider-thumb {
+    width: 16px !important;
+    height: 16px !important;
+    opacity: 1 !important;
   }
+
+  .MuiSlider-track {
+    height: 4px !important;
+  }
+
+  .MuiSlider-rail {
+    height: 4px !important;
+    opacity: 0.3;
+  }
+}
+
+/* 横屏模式优化 */
+@media (max-width: 768px) and (orientation: landscape) {
+  :root {
+    --player-height: 120px;
+  }
+
+  .player-content {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: 1fr;
+    gap: 16px;
+  }
+
+  .song-info {
+    grid-template-columns: 48px 1fr;
+  }
+
+  .album-cover {
+    width: 48px;
+    height: 48px;
+  }
+
+  .player-controls-wrapper {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .player-progress {
+    flex: 1;
+    margin: 0;
+  }
+
+  .player-controls {
+    padding: 0;
+    gap: 8px;
+  }
+}
+
+/* 深色模式优化 */
+@media (prefers-color-scheme: dark) {
+  .music-player {
+    background: rgba(18, 18, 18, 0.98);
+  }
+
+  .play-button {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+  }
+}
+
+/* 动画效果 */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.music-player {
+  animation: slideUp 0.3s ease-out;
 }
 
 /* 触摸优化 */
@@ -1844,4 +1961,187 @@ body {
 .error-message {
   color: var(--error-color) !important;
   font-weight: 500 !important;
+}
+
+/* 新碟上架页面样式 */
+.new-albums-container {
+  padding: 2rem;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+}
+
+.import-section {
+  margin-bottom: 3rem;
+}
+
+.page-title {
+  margin-bottom: 1rem !important;
+  font-weight: 600 !important;
+}
+
+.page-description {
+  margin-bottom: 2rem !important;
+  max-width: 600px;
+}
+
+.import-card {
+  padding: 2rem;
+  background: var(--card-background);
+  border: 1px solid var(--border);
+  border-radius: 16px !important;
+}
+
+.import-form {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.git-icon {
+  color: var(--text-secondary);
+  margin-right: 8px;
+}
+
+.import-button {
+  min-width: 140px !important;
+  height: 56px !important;
+}
+
+.alert {
+  margin-top: 1rem;
+}
+
+.albums-section {
+  margin-top: 3rem;
+}
+
+.section-title {
+  margin-bottom: 1.5rem !important;
+  font-weight: 600 !important;
+}
+
+.album-card {
+  height: 100%;
+  background: var(--card-background);
+  border: 1px solid var(--border);
+  border-radius: 12px !important;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.album-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px var(--shadow-color);
+}
+
+.album-cover-container {
+  position: relative;
+  padding-top: 100%;
+  background: var(--card-background);
+  overflow: hidden;
+}
+
+.album-cover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.album-card:hover .album-cover {
+  transform: scale(1.05);
+}
+
+.album-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.album-card:hover .album-overlay {
+  opacity: 1;
+}
+
+.album-overlay .play-button {
+  background: var(--primary-color) !important;
+  color: white !important;
+  padding: 12px !important;
+  transform: scale(0.8);
+  transition: all 0.3s ease !important;
+}
+
+.album-card:hover .play-button {
+  transform: scale(1);
+}
+
+.album-info {
+  padding: 1rem;
+}
+
+.album-name {
+  font-weight: 600 !important;
+  margin-bottom: 0.25rem !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.album-artist {
+  color: var(--text-secondary) !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+  .new-albums-container {
+    padding: 1rem;
+  }
+
+  .import-form {
+    flex-direction: column;
+  }
+
+  .import-button {
+    width: 100% !important;
+  }
+
+  .album-card {
+    margin: 0 -1rem;
+    border-radius: 0 !important;
+  }
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.album-card {
+  animation: fadeInUp 0.5s ease backwards;
+}
+
+.album-card:nth-child(n) {
+  animation-delay: calc(0.1s * var(--i, 0));
 }
