@@ -2387,3 +2387,159 @@ body {
     }
   }
 }
+
+/* 移动端播放器样式优化 */
+@media (max-width: 768px) {
+  .music-player {
+    height: var(--player-height);
+    padding: 8px 12px;
+    background: rgba(18, 18, 18, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .player-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    height: 100%;
+  }
+
+  .song-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .album-cover {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .default-album-cover {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .song-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .song-name {
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 2px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .artist-name {
+    font-size: 0.75rem !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .player-controls-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .player-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 4px;
+  }
+
+  .time {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.6);
+    min-width: 35px;
+  }
+
+  .player-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .control-button {
+    padding: 8px !important;
+  }
+
+  .control-button svg {
+    font-size: 24px;
+  }
+
+  .play-button {
+    width: 44px !important;
+    height: 44px !important;
+    background: linear-gradient(45deg, #1DB954, #1ed760) !important;
+    box-shadow: 0 2px 8px rgba(29, 185, 84, 0.3) !important;
+  }
+
+  .play-button:active {
+    transform: scale(0.95);
+  }
+
+  .volume-control {
+    display: none;
+  }
+
+  /* 小屏幕优化 */
+  @media (max-width: 360px) {
+    .music-player {
+      padding: 6px 10px;
+    }
+
+    .album-cover,
+    .default-album-cover {
+      width: 42px;
+      height: 42px;
+    }
+
+    .song-name {
+      font-size: 0.85rem !important;
+    }
+
+    .artist-name {
+      font-size: 0.7rem !important;
+    }
+
+    .control-button {
+      padding: 6px !important;
+    }
+
+    .control-button svg {
+      font-size: 22px;
+    }
+
+    .play-button {
+      width: 40px !important;
+      height: 40px !important;
+    }
+  }
+
+  /* 横屏模式优化 */
+  @media (orientation: landscape) {
+    .player-content {
+      grid-template-columns: auto 1fr;
+      gap: 16px;
+    }
+
+    .song-info {
+      width: 200px;
+    }
+  }
+}
