@@ -211,12 +211,11 @@ export default function HomePage() {
           <div className="search-box">
             <TextField
               fullWidth
-              placeholder="搜索音乐、艺术家或专辑..."
+              placeholder="搜索音乐、歌手、专辑..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
-              variant="outlined"
-              size="small"
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              className="search-input"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -225,32 +224,43 @@ export default function HomePage() {
                 ),
               }}
             />
-            <Button 
-              variant="contained" 
-              className="search-btn"
+            <Button
+              variant="contained"
               onClick={handleSearch}
               disabled={isLoading}
+              className="search-btn"
+              sx={{
+                minWidth: 'unset',
+                width: '44px',
+                height: '44px',
+                borderRadius: '22px',
+                padding: 0,
+                marginLeft: '8px'
+              }}
             >
-              {isLoading ? <CircularProgress size={24} /> : '搜索'}
+              {isLoading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                <Search />
+              )}
             </Button>
           </div>
-          <div className="user-actions">
-            <Tooltip title={viewMode === 'grid' ? '切换到列表视图' : '切换到网格视图'}>
-              <IconButton 
-                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                className="view-mode-toggle"
-              >
-                {viewMode === 'grid' ? <ViewList /> : <GridView />}
-              </IconButton>
-            </Tooltip>
+          <div className="header-buttons">
             <IconButton 
-              className="theme-toggle" 
+              className="header-button"
+              onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+              title={viewMode === 'grid' ? '切换到列表视图' : '切换到网格视图'}
+            >
+              {viewMode === 'grid' ? <ViewList /> : <GridView />}
+            </IconButton>
+            <IconButton 
+              className="header-button"
               onClick={toggleTheme}
               title={isDarkMode ? '切换到浅色模式' : '切换到深色模式'}
             >
               <DarkMode />
             </IconButton>
-            <IconButton className="user-avatar">
+            <IconButton className="header-button" title="用户中心">
               <AccountCircle />
             </IconButton>
           </div>
