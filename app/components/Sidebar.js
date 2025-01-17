@@ -114,12 +114,6 @@ export default function Sidebar() {
       )}
 
       <aside className={`sidebar ${isCollapsed && !isMobile ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
-        <div className="sidebar-header">
-          <Link href="/" className="logo">
-            <LibraryMusic className="logo-icon" />
-            {(!isCollapsed || isMobile) && <span>Cereals Music</span>}
-          </Link>
-        </div>
 
         <div className="nav-section">
           <div className="nav-section-header">

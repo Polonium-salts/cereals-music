@@ -24,6 +24,84 @@ api.interceptors.response.use(
   }
 );
 
+// URL配置
+const URL_CONFIG = {
+  MAX_RETRY: 2,
+  RETRY_DELAY: 1000,
+  TIMEOUT: 8000,
+  CACHE_DURATION: 5 * 60 * 1000, // 5分钟缓存
+  QUALITY_LEVELS: ['standard', 'higher', 'exhigh']
+};
+
+// URL缓存
+const urlCache = new Map();
+
+// 尝试从指定API获取音乐URL
+const tryGetMusicUrl = async (id, api) => {
+  try {
+    const response = await api.get('/song/url/v1', {
+      params: {
+        id,
+        level: 'standard',
+        realIP: '116.25.146.177'
+      },
+      timeout: URL_CONFIG.TIMEOUT
+    });
+
+    const url = response.data?.data?.[0]?.url;
+    if (!url) {
+      throw new Error('URL不可用');
+    }
+
+    // 验证URL是否可访问
+    const checkResponse = await fetch(url, { method: 'HEAD' });
+    if (!checkResponse.ok) {
+      throw new Error('URL无法访问');
+    }
+
+    return url;
+  } catch (error) {
+    console.error('获取音乐URL失败:', error);
+    throw error;
+  }
+};
+
+export const getMusicUrl = async (id) => {
+  // 检查缓存
+  const cached = urlCache.get(id);
+  if (cached && Date.now() - cached.timestamp < URL_CONFIG.CACHE_DURATION) {
+    return cached.url;
+  }
+
+  let lastError;
+  // 尝试不同的音质级别
+  for (const level of URL_CONFIG.QUALITY_LEVELS) {
+    // 重试机制
+    for (let i = 0; i <= URL_CONFIG.MAX_RETRY; i++) {
+      try {
+        const url = await tryGetMusicUrl(id, api);
+        
+        // 缓存URL
+        urlCache.set(id, {
+          url,
+          timestamp: Date.now()
+        });
+        
+        return url;
+      } catch (error) {
+        lastError = error;
+        if (i < URL_CONFIG.MAX_RETRY) {
+          await new Promise(resolve => setTimeout(resolve, URL_CONFIG.RETRY_DELAY));
+        }
+      }
+    }
+  }
+
+  // 所有尝试都失败
+  console.error('获取音乐URL最终失败:', lastError);
+  throw new Error('无法获取音乐URL，请稍后重试');
+};
+
 export const searchMusic = async (keywords) => {
   try {
     // 首先搜索歌曲
@@ -71,27 +149,6 @@ export const searchMusic = async (keywords) => {
   } catch (error) {
     console.error('网易云音乐搜索失败:', error);
     throw new Error('网易云音乐搜索失败');
-  }
-};
-
-export const getMusicUrl = async (id) => {
-  try {
-    const response = await api.get('/song/url', {
-      params: { 
-        id,
-        realIP: '116.25.146.177' // 添加 realIP 参数
-      }
-    });
-
-    const url = response.data?.data?.[0]?.url;
-    if (!url) {
-      throw new Error('无法获取音乐URL');
-    }
-
-    return url;
-  } catch (error) {
-    console.error('获取音乐URL失败:', error);
-    throw error;
   }
 };
 

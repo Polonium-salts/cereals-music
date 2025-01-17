@@ -104,35 +104,39 @@ export default function MusicPlayer({ currentSong, onNext, onPrevious }) {
           
           // 创建新的音频实例
           const audio = new Audio();
+          
+          // 设置音频属性
           audio.preload = "auto";
+          audio.crossOrigin = "anonymous"; // 添加跨域支持
           audio.src = url;
           
           // 设置音频事件监听
-          audio.addEventListener('timeupdate', handleTimeUpdate);
-          audio.addEventListener('ended', handleNext);
-          audio.addEventListener('error', (e) => {
-            console.error('音频加载错误:', e);
-            setIsPlaying(false);
-            // 播放出错时尝试切换到下一首
-            handleNext();
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('音频加载超时')), 15000);
           });
+
+          const loadPromise = new Promise((resolve, reject) => {
+            audio.addEventListener('canplaythrough', resolve, { once: true });
+            audio.addEventListener('error', (e) => {
+              reject(new Error(`音频加载失败: ${e.target.error?.message || '未知错误'}`));
+            }, { once: true });
+          });
+
+          // 等待音频加载完成或超时
+          await Promise.race([loadPromise, timeoutPromise]);
           
           // 设置音频属性
           audio.volume = isMuted ? 0 : volume;
           audio.playbackRate = playbackRate;
           audio.loop = isRepeat;
           
-          // 等待音频加载
-          await new Promise((resolve, reject) => {
-            audio.addEventListener('canplaythrough', resolve, { once: true });
-            audio.addEventListener('error', reject, { once: true });
-            
-            // 设置加载超时
-            const timeout = setTimeout(() => {
-              reject(new Error('音频加载超时'));
-            }, 15000);
-            
-            audio.addEventListener('canplaythrough', () => clearTimeout(timeout), { once: true });
+          // 添加事件监听
+          audio.addEventListener('timeupdate', handleTimeUpdate);
+          audio.addEventListener('ended', handleNext);
+          audio.addEventListener('error', (e) => {
+            console.error('音频播放错误:', e);
+            setIsPlaying(false);
+            handleNext();
           });
           
           // 更新音频引用
@@ -144,13 +148,22 @@ export default function MusicPlayer({ currentSong, onNext, onPrevious }) {
           
           audioRef.current = audio;
           
-          // 自动播放
-          await audio.play();
-          setIsPlaying(true);
+          // 尝试播放
+          try {
+            await audio.play();
+            setIsPlaying(true);
+          } catch (playError) {
+            console.error('播放失败:', playError);
+            // 在移动端，可能需要用户交互才能自动播放
+            if (playError.name === 'NotAllowedError') {
+              setIsPlaying(false);
+            } else {
+              handleNext();
+            }
+          }
         } catch (error) {
           console.error('音频加载或播放失败:', error);
           setIsPlaying(false);
-          // 如果播放失败，尝试切换到下一首
           if (error.message !== '无法获取音乐播放地址') {
             handleNext();
           }
@@ -205,10 +218,21 @@ export default function MusicPlayer({ currentSong, onNext, onPrevious }) {
       
       if (isPlaying) {
         audioRef.current.pause();
+        setIsPlaying(false);
       } else {
-        await audioRef.current.play();
+        try {
+          await audioRef.current.play();
+          setIsPlaying(true);
+        } catch (error) {
+          console.error('播放失败:', error);
+          if (error.name === 'NotAllowedError') {
+            // 移动端需要用户交互才能播放
+            setError('请点击播放按钮开始播放');
+          } else {
+            handleNext();
+          }
+        }
       }
-      setIsPlaying(!isPlaying);
     } catch (error) {
       console.error('播放控制失败:', error);
       setIsPlaying(false);
