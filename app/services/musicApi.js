@@ -36,13 +36,13 @@ const URL_CONFIG = {
 // URL缓存
 const urlCache = new Map();
 
-// 尝试从指定API获取音乐URL
-const tryGetMusicUrl = async (id, api) => {
+// 尝试获取音乐URL
+const tryGetMusicUrl = async (id, quality) => {
   try {
     const response = await api.get('/song/url/v1', {
       params: {
         id,
-        level: 'standard',
+        level: quality,
         realIP: '116.25.146.177'
       },
       timeout: URL_CONFIG.TIMEOUT
@@ -54,43 +54,47 @@ const tryGetMusicUrl = async (id, api) => {
     }
 
     // 验证URL是否可访问
-    const checkResponse = await fetch(url, { method: 'HEAD' });
-    if (!checkResponse.ok) {
+    const testResponse = await fetch(url, { method: 'HEAD' });
+    if (!testResponse.ok) {
       throw new Error('URL无法访问');
     }
 
     return url;
   } catch (error) {
-    console.error('获取音乐URL失败:', error);
+    console.error(`获取音乐URL失败 (quality: ${quality}):`, error);
     throw error;
   }
 };
 
 export const getMusicUrl = async (id) => {
+  if (!id) {
+    throw new Error('缺少音乐ID');
+  }
+
   // 检查缓存
+  const now = Date.now();
   const cached = urlCache.get(id);
-  if (cached && Date.now() - cached.timestamp < URL_CONFIG.CACHE_DURATION) {
+  if (cached && now - cached.timestamp < URL_CONFIG.CACHE_DURATION) {
     return cached.url;
   }
 
   let lastError;
-  // 尝试不同的音质级别
-  for (const level of URL_CONFIG.QUALITY_LEVELS) {
-    // 重试机制
-    for (let i = 0; i <= URL_CONFIG.MAX_RETRY; i++) {
+  // 尝试不同音质级别
+  for (const quality of URL_CONFIG.QUALITY_LEVELS) {
+    for (let retry = 0; retry <= URL_CONFIG.MAX_RETRY; retry++) {
       try {
-        const url = await tryGetMusicUrl(id, api);
+        const url = await tryGetMusicUrl(id, quality);
         
         // 缓存URL
         urlCache.set(id, {
           url,
-          timestamp: Date.now()
+          timestamp: now
         });
         
         return url;
       } catch (error) {
         lastError = error;
-        if (i < URL_CONFIG.MAX_RETRY) {
+        if (retry < URL_CONFIG.MAX_RETRY) {
           await new Promise(resolve => setTimeout(resolve, URL_CONFIG.RETRY_DELAY));
         }
       }
@@ -99,7 +103,7 @@ export const getMusicUrl = async (id) => {
 
   // 所有尝试都失败
   console.error('获取音乐URL最终失败:', lastError);
-  throw new Error('无法获取音乐URL，请稍后重试');
+  throw new Error('无法获取音乐播放地址');
 };
 
 export const searchMusic = async (keywords) => {
